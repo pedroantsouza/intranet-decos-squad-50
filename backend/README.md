@@ -4,7 +4,6 @@
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # ajuste DATABASE_URL e JWT_SECRET
 
 alembic upgrade head
 python -m scripts.criar_superadmin   # só na primeira vez, cria o acesso inicial
