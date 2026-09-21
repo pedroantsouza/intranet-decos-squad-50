@@ -23,7 +23,6 @@ backend/
         schemas.py       # Pydantic
         router.py         # endpoints FastAPI
         service.py         # lógica de negócio
-        dependencies.py     # checagem de permissão específica do módulo
       murais/
       calendario/
       documentos/
@@ -75,11 +74,11 @@ Decisão consciente: `role` e `setor_id` embutidos no token evitam consulta ao b
 
 Duas camadas de checagem, usadas conforme o caso:
 
-- **Dependency do FastAPI** (`Depends()`) — para permissão **genérica**, que não depende do recurso específico sendo acessado (ex: "só admin ou superadmin acessa `/logs`").
+- **Dependency do FastAPI** (`Depends()`) — para permissão **genérica**, que não depende do recurso específico sendo acessado (ex: "só admin ou superadmin acessa `/logs`"). Ficam todas centralizadas em `core/permissions.py` (`usuario_atual`, `requer_admin`, `requer_superadmin`); os módulos não têm `dependencies.py` próprio.
 - **Checagem dentro do service** — para permissão que depende de um dado que só existe **depois de buscar o recurso** no banco (ex: "admin_setor só deleta POP do próprio setor" — precisa buscar o POP primeiro para saber o setor dele).
 
 ```python
-# dependencies.py
+# core/permissions.py
 def requer_admin(usuario: User = Depends(usuario_atual)) -> User:
     if usuario.role not in ("admin_setor", "superadmin"):
         raise HTTPException(403, "Acesso negado")
