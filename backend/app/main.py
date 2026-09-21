@@ -10,6 +10,7 @@ from app.core.database import obter_sessao
 from app.core.erros import registrar_tratadores_de_erro
 from app.modules.autenticacao.router import router as roteador_autenticacao
 from app.modules.calendario.router import router as roteador_calendario
+from app.modules.murais.router import router as roteador_murais
 from app.modules.setores.router import router as roteador_setores
 from app.modules.usuarios.router import router as roteador_usuarios
 
@@ -30,6 +31,7 @@ app.include_router(roteador_autenticacao)
 app.include_router(roteador_setores)
 app.include_router(roteador_usuarios)
 app.include_router(roteador_calendario)
+app.include_router(roteador_murais)
 
 
 @app.get("/saude", tags=["saude"])
