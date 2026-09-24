@@ -15,19 +15,16 @@ class EventoEntrada(BaseModel):
     @field_validator("data_inicio", "data_fim")
     @classmethod
     def normalizar_fuso(cls, valor: datetime | None) -> datetime | None:
-        """Datetime sem fuso é lido como UTC — impede comparar naive com aware no service."""
         if valor is not None and valor.tzinfo is None:
             return valor.replace(tzinfo=UTC)
         return valor
 
 
 class EventoCriar(EventoEntrada):
-    # Só o superadmin escolhe: para admin_setor o service força o próprio setor.
     setor_id: uuid.UUID | None = None
 
 
 class EventoAtualizar(EventoEntrada):
-    # setor_id e autor_id não são editáveis: trocar o setor mudaria quem pode editar o evento.
     pass
 
 
@@ -47,8 +44,6 @@ class EventoResposta(BaseModel):
 
 
 class AniversarianteResposta(BaseModel):
-    """Derivado de usuarios.data_nascimento — o ano nunca é exposto, para não revelar idade."""
-
     id: uuid.UUID
     nome: str
     dia: int

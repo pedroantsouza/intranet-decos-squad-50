@@ -18,14 +18,12 @@ class Evento(Base):
     data_inicio: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     data_fim: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     autor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuarios.id"), index=True)
-    # Setor de quem criou: define quem pode editar/excluir. A leitura é sempre institucional.
     setor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("setores.id"), index=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     autor: Mapped[Usuario] = relationship()
     setor: Mapped[Setor] = relationship()
 
-    # Expostas no schema de resposta para a tela não precisar de uma busca por autor/setor.
     @property
     def autor_nome(self) -> str:
         return self.autor.nome
