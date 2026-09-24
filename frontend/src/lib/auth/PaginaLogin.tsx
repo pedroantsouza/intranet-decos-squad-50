@@ -2,8 +2,10 @@ import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeSlash } from '@phosphor-icons/react' // Ou 'lucide-react' (Eye, EyeOff)
+import { Eye, EyeSlash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import fachada from '../../shared/assets/fachada.png'
+import logoDecos from '../../shared/assets/logo-decos.png'
 import { api } from '../api'
 import { useAuth } from './useAuth'
 
@@ -30,27 +32,22 @@ function PaginaLogin() {
 
   return (
     <div className="grid min-h-screen grid-cols-1 bg-white lg:grid-cols-2">
-      {/* Coluna Esquerda: Formulário de Login */}
       <div className="flex min-h-screen flex-col items-center justify-between px-6 py-12 text-center lg:px-[8vw] lg:py-14">
         <div className="my-auto flex w-full max-w-[400px] flex-col items-center">
-          {/* Logo Hospital Decós */}
           <img
-            src="/assets/logo-horizontal.png"
+            src={logoDecos}
             alt="Hospital Decós"
             className="mb-11 h-11 w-[168px] object-contain"
           />
 
-          {/* Título */}
           <h1 className="mb-[34px] text-[30px] font-bold tracking-[-0.025em] text-slate-800">
             Acesse a intranet
           </h1>
 
-          {/* Formulário */}
           <form
             onSubmit={handleSubmit((dados) => mutate(dados))}
             className="flex w-full flex-col gap-[18px] text-left"
           >
-            {/* Campo E-mail */}
             <label className="flex flex-col gap-[7px]">
               <span className="text-[11px] font-medium tracking-[0.07em] text-slate-500 uppercase">
                 E-MAIL
@@ -63,7 +60,6 @@ function PaginaLogin() {
               />
             </label>
 
-            {/* Campo Senha */}
             <label className="flex flex-col gap-[7px]">
               <span className="text-[11px] font-medium tracking-[0.07em] text-slate-500 uppercase">
                 SENHA
@@ -90,7 +86,6 @@ function PaginaLogin() {
               </div>
             </label>
 
-            {/* Botão Entrar */}
             <button
               type="submit"
               disabled={isPending}
@@ -101,16 +96,14 @@ function PaginaLogin() {
           </form>
         </div>
 
-        {/* Rodapé */}
         <span className="pt-12 text-[11.5px] text-slate-400">
           Hospital Decós · Uso restrito a colaboradores
         </span>
       </div>
 
-      {/* Coluna Direita: Imagem da Fachada com Gradiente Vinho */}
       <div className="relative hidden overflow-hidden bg-slate-800 lg:block">
         <img
-          src="/assets/fachada.png"
+          src={fachada}
           alt="Fachada do Hospital Decós"
           className="absolute inset-0 h-full w-full object-cover"
         />
