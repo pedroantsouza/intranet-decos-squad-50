@@ -17,10 +17,6 @@ from app.modules.calendario.schemas import (
 router = APIRouter(prefix="/calendario", tags=["calendario"])
 
 
-# Eventos: leitura para qualquer usuário autenticado, escrita para admin_setor (do próprio
-# setor, checado no service) e superadmin.
-
-
 @router.get(
     "/eventos", response_model=list[EventoResposta], dependencies=[Depends(usuario_atual)]
 )
@@ -72,9 +68,6 @@ def deletar_evento(
     sessao: Session = Depends(obter_sessao),
 ):
     service.deletar_evento(sessao, evento_id, usuario)
-
-
-# Aniversariantes: leitura para qualquer usuário autenticado.
 
 
 @router.get(

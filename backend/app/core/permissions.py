@@ -73,3 +73,24 @@ def pode_gerenciar_setor(usuario: UsuarioAutenticado, setor_id: uuid.UUID) -> bo
     if usuario.role == Papel.SUPERADMIN:
         return True
     return usuario.role == Papel.ADMIN_SETOR and usuario.setor_id == setor_id
+
+
+def garantir_escopo(usuario: UsuarioAutenticado, setor_id: uuid.UUID) -> None:
+    if not pode_gerenciar_setor(usuario, setor_id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do seu setor")
+
+
+def resolver_setor(
+    setor_id: uuid.UUID | None, usuario: UsuarioAutenticado, entidade: str
+) -> uuid.UUID:
+    if usuario.role == Papel.ADMIN_SETOR:
+        if usuario.setor_id is None or (setor_id is not None and setor_id != usuario.setor_id):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do seu setor")
+        return usuario.setor_id
+    escolhido = setor_id or usuario.setor_id
+    if escolhido is None:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {"campo": "setor_id", "mensagem": f"Informe o setor do {entidade}"},
+        )
+    return escolhido
