@@ -1,6 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import { Eye, EyeSlash } from '@phosphor-icons/react' // Ou 'lucide-react' (Eye, EyeOff)
 import { toast } from 'sonner'
 import { api } from '../api'
 import { useAuth } from './useAuth'
@@ -11,6 +13,7 @@ interface FormularioLogin {
 }
 
 function PaginaLogin() {
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const { register, handleSubmit } = useForm<FormularioLogin>()
   const { entrar } = useAuth()
   const navegar = useNavigate()
@@ -26,32 +29,99 @@ function PaginaLogin() {
   })
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <form
-        onSubmit={handleSubmit((dados) => mutate(dados))}
-        className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-gray-200 bg-white p-8 shadow-sm"
-      >
-        <h1 className="text-lg font-semibold text-gray-900">Intranet do Hospital</h1>
-        <input
-          type="email"
-          placeholder="E-mail"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('email', { required: true })}
+    <div className="grid min-h-screen grid-cols-1 bg-white lg:grid-cols-2">
+      {/* Coluna Esquerda: Formulário de Login */}
+      <div className="flex min-h-screen flex-col items-center justify-between px-6 py-12 text-center lg:px-[8vw] lg:py-14">
+        <div className="my-auto flex w-full max-w-[400px] flex-col items-center">
+          {/* Logo Hospital Decós */}
+          <img
+            src="/assets/logo-horizontal.png"
+            alt="Hospital Decós"
+            className="mb-11 h-11 w-[168px] object-contain"
+          />
+
+          {/* Título */}
+          <h1 className="mb-[34px] text-[30px] font-bold tracking-[-0.025em] text-slate-800">
+            Acesse a intranet
+          </h1>
+
+          {/* Formulário */}
+          <form
+            onSubmit={handleSubmit((dados) => mutate(dados))}
+            className="flex w-full flex-col gap-[18px] text-left"
+          >
+            {/* Campo E-mail */}
+            <label className="flex flex-col gap-[7px]">
+              <span className="text-[11px] font-medium tracking-[0.07em] text-slate-500 uppercase">
+                E-MAIL
+              </span>
+              <input
+                type="email"
+                placeholder="nome.sobrenome@decos.com.br"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-[14px] py-[13px] text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#800020]"
+                {...register('email', { required: true })}
+              />
+            </label>
+
+            {/* Campo Senha */}
+            <label className="flex flex-col gap-[7px]">
+              <span className="text-[11px] font-medium tracking-[0.07em] text-slate-500 uppercase">
+                SENHA
+              </span>
+              <div className="relative block">
+                <input
+                  type={mostrarSenha ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-[13px] pr-[46px] pl-[14px] text-sm text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-[#800020]"
+                  {...register('senha', { required: true })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha((prev) => !prev)}
+                  title={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                  className="absolute right-[6px] top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                >
+                  {mostrarSenha ? (
+                    <EyeSlash className="h-[18px] w-[18px]" />
+                  ) : (
+                    <Eye className="h-[18px] w-[18px]" />
+                  )}
+                </button>
+              </div>
+            </label>
+
+            {/* Botão Entrar */}
+            <button
+              type="submit"
+              disabled={isPending}
+              className="mt-[12px] w-full rounded-lg bg-[#800020] py-[14px] text-center text-sm font-medium text-white transition-colors hover:bg-[#3b000e] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isPending ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+        </div>
+
+        {/* Rodapé */}
+        <span className="pt-12 text-[11.5px] text-slate-400">
+          Hospital Decós · Uso restrito a colaboradores
+        </span>
+      </div>
+
+      {/* Coluna Direita: Imagem da Fachada com Gradiente Vinho */}
+      <div className="relative hidden overflow-hidden bg-slate-800 lg:block">
+        <img
+          src="/assets/fachada.png"
+          alt="Fachada do Hospital Decós"
+          className="absolute inset-0 h-full w-full object-cover"
         />
-        <input
-          type="password"
-          placeholder="Senha"
-          className="rounded border border-gray-300 px-3 py-2"
-          {...register('senha', { required: true })}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(200deg, rgba(59,0,14,0.10) 0%, rgba(59,0,14,0.62) 100%)',
+          }}
         />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded bg-gray-900 px-3 py-2 text-white disabled:opacity-50"
-        >
-          Entrar
-        </button>
-      </form>
+      </div>
     </div>
   )
 }
