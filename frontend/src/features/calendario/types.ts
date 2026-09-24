@@ -34,3 +34,5 @@ export interface FiltroEventos {
   ate?: string
   setorId?: string
 }
+
+export type VisaoCalendario = 'dia' | 'semana' | 'mes' | 'ano'
