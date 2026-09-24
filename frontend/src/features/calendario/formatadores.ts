@@ -1,3 +1,5 @@
+import type { Evento, VisaoCalendario } from './types'
+
 export const NOMES_MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
@@ -9,6 +11,11 @@ export const MESES_ABREV = [
 
 export const DIAS_SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 
+const NOMES_DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+const HORA_INICIAL_PADRAO = 7
+const HORA_FINAL_PADRAO = 19
+
 function doisDigitos(valor: number): string {
   return String(valor).padStart(2, '0')
 }
@@ -17,14 +24,26 @@ export function chaveDia(ano: number, mes: number, dia: number): string {
   return `${ano}-${doisDigitos(mes + 1)}-${doisDigitos(dia)}`
 }
 
-export function chaveDiaDeIso(iso: string): string {
-  const data = new Date(iso)
+export function chaveDeData(data: Date): string {
   return chaveDia(data.getFullYear(), data.getMonth(), data.getDate())
+}
+
+export function chaveDiaDeIso(iso: string): string {
+  return chaveDeData(new Date(iso))
 }
 
 export function formatarHora(iso: string): string {
   const data = new Date(iso)
   return `${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}`
+}
+
+export function formatarIntervaloHoras(evento: Evento): string {
+  const inicio = formatarHora(evento.dataInicio)
+  return evento.dataFim ? `${inicio} – ${formatarHora(evento.dataFim)}` : inicio
+}
+
+export function rotuloHora(hora: number): string {
+  return `${doisDigitos(hora)}:00`
 }
 
 export function formatarDiaMes(iso: string): { dia: string; mes: string } {
@@ -42,9 +61,92 @@ export function combinarDataHora(data: string, hora: string): string {
   return new Date(ano, mes - 1, dia, horas, minutos).toISOString()
 }
 
-export function intervaloDoMes(ano: number, mes: number): { de: string; ate: string } {
-  const ultimoDia = new Date(ano, mes + 1, 0).getDate()
-  return { de: chaveDia(ano, mes, 1), ate: chaveDia(ano, mes, ultimoDia) }
+export function somarDias(data: Date, dias: number): Date {
+  return new Date(data.getFullYear(), data.getMonth(), data.getDate() + dias)
+}
+
+function somarMeses(data: Date, meses: number): Date {
+  const alvo = new Date(data.getFullYear(), data.getMonth() + meses, 1)
+  const ultimoDia = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate()
+  return new Date(alvo.getFullYear(), alvo.getMonth(), Math.min(data.getDate(), ultimoDia))
+}
+
+export function deslocarPeriodo(data: Date, visao: VisaoCalendario, passo: number): Date {
+  if (visao === 'dia') return somarDias(data, passo)
+  if (visao === 'semana') return somarDias(data, passo * 7)
+  if (visao === 'mes') return somarMeses(data, passo)
+  return somarMeses(data, passo * 12)
+}
+
+export function diasDaSemana(data: Date): Date[] {
+  const domingo = somarDias(data, -data.getDay())
+  return Array.from({ length: 7 }, (_, indice) => somarDias(domingo, indice))
+}
+
+export function intervaloDoPeriodo(data: Date, visao: VisaoCalendario): { de: string; ate: string } {
+  let inicio = data
+  let fim = data
+  if (visao === 'semana') {
+    const dias = diasDaSemana(data)
+    inicio = dias[0]
+    fim = dias[6]
+  } else if (visao === 'mes') {
+    inicio = new Date(data.getFullYear(), data.getMonth(), 1)
+    fim = new Date(data.getFullYear(), data.getMonth() + 1, 0)
+  } else if (visao === 'ano') {
+    inicio = new Date(data.getFullYear(), 0, 1)
+    fim = new Date(data.getFullYear(), 11, 31)
+  }
+  return { de: chaveDeData(inicio), ate: chaveDeData(somarDias(fim, 1)) }
+}
+
+export function mesesDoPeriodo(data: Date, visao: VisaoCalendario): number[] {
+  if (visao === 'ano') return Array.from({ length: 12 }, (_, indice) => indice + 1)
+  if (visao === 'semana') return [...new Set(diasDaSemana(data).map((dia) => dia.getMonth() + 1))]
+  return [data.getMonth() + 1]
+}
+
+export function tituloDoPeriodo(data: Date, visao: VisaoCalendario): string {
+  const ano = data.getFullYear()
+  if (visao === 'ano') return String(ano)
+  if (visao === 'mes') return `${NOMES_MESES[data.getMonth()]} ${ano}`
+  if (visao === 'dia') {
+    const mes = NOMES_MESES[data.getMonth()].toLowerCase()
+    return `${NOMES_DIAS_SEMANA[data.getDay()]}, ${data.getDate()} de ${mes} de ${ano}`
+  }
+
+  const dias = diasDaSemana(data)
+  const inicio = dias[0]
+  const fim = dias[6]
+  const mesInicio = MESES_ABREV[inicio.getMonth()].toLowerCase()
+  const mesFim = MESES_ABREV[fim.getMonth()].toLowerCase()
+  if (inicio.getFullYear() !== fim.getFullYear()) {
+    return `${inicio.getDate()} ${mesInicio} ${inicio.getFullYear()} – ${fim.getDate()} ${mesFim} ${fim.getFullYear()}`
+  }
+  if (inicio.getMonth() !== fim.getMonth()) {
+    return `${inicio.getDate()} ${mesInicio} – ${fim.getDate()} ${mesFim} ${fim.getFullYear()}`
+  }
+  return `${inicio.getDate()}–${fim.getDate()} ${mesFim} ${fim.getFullYear()}`
+}
+
+export function faixaDeHoras(eventos: Evento[]): number[] {
+  let inicial = HORA_INICIAL_PADRAO
+  let final = HORA_FINAL_PADRAO
+  for (const evento of eventos) {
+    const hora = new Date(evento.dataInicio).getHours()
+    inicial = Math.min(inicial, hora)
+    final = Math.max(final, hora)
+  }
+  return Array.from({ length: final - inicial + 1 }, (_, indice) => inicial + indice)
+}
+
+export function agruparEventosPorDia(eventos: Evento[]): Map<string, Evento[]> {
+  const mapa = new Map<string, Evento[]>()
+  for (const evento of eventos) {
+    const chave = chaveDiaDeIso(evento.dataInicio)
+    mapa.set(chave, [...(mapa.get(chave) ?? []), evento])
+  }
+  return mapa
 }
 
 export interface CelulaMes {
@@ -56,8 +158,7 @@ export interface CelulaMes {
 export function montarGradeMes(ano: number, mes: number): CelulaMes[] {
   const primeiroDiaSemana = new Date(ano, mes, 1).getDay()
   const totalDias = new Date(ano, mes + 1, 0).getDate()
-  const hoje = new Date()
-  const chaveHoje = chaveDia(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())
+  const chaveHoje = chaveDeData(new Date())
 
   const celulas: CelulaMes[] = []
   for (let i = 0; i < primeiroDiaSemana; i++) {
