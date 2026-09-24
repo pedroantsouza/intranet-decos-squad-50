@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.core.permissions import UsuarioAutenticado, pode_gerenciar_setor
+from app.core.permissions import UsuarioAutenticado, garantir_escopo
 from app.modules.setores.models import Ramal, Setor
 from app.modules.setores.schemas import RamalAtualizar, RamalCriar, SetorAtualizar, SetorCriar
 
@@ -60,7 +60,7 @@ def criar_ramal(
     sessao: Session, setor_id: uuid.UUID, dados: RamalCriar, usuario: UsuarioAutenticado
 ) -> Ramal:
     setor = buscar_setor(sessao, setor_id)
-    _garantir_escopo(usuario, setor.id)
+    garantir_escopo(usuario, setor.id)
     ramal = Ramal(numero=dados.numero, setor_id=setor.id)
     sessao.add(ramal)
     sessao.commit()
@@ -71,7 +71,7 @@ def atualizar_ramal(
     sessao: Session, ramal_id: uuid.UUID, dados: RamalAtualizar, usuario: UsuarioAutenticado
 ) -> Ramal:
     ramal = _buscar_ramal(sessao, ramal_id)
-    _garantir_escopo(usuario, ramal.setor_id)
+    garantir_escopo(usuario, ramal.setor_id)
     ramal.numero = dados.numero
     sessao.commit()
     return ramal
@@ -79,7 +79,7 @@ def atualizar_ramal(
 
 def deletar_ramal(sessao: Session, ramal_id: uuid.UUID, usuario: UsuarioAutenticado) -> None:
     ramal = _buscar_ramal(sessao, ramal_id)
-    _garantir_escopo(usuario, ramal.setor_id)
+    garantir_escopo(usuario, ramal.setor_id)
     sessao.delete(ramal)
     sessao.commit()
 
@@ -89,11 +89,6 @@ def _buscar_ramal(sessao: Session, ramal_id: uuid.UUID) -> Ramal:
     if ramal is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Ramal não encontrado")
     return ramal
-
-
-def _garantir_escopo(usuario: UsuarioAutenticado, setor_id: uuid.UUID) -> None:
-    if not pode_gerenciar_setor(usuario, setor_id):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do seu setor")
 
 
 def _salvar(sessao: Session, conflito: str | dict[str, str]) -> None:

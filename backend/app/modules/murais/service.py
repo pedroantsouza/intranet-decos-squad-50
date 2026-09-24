@@ -5,13 +5,11 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.permissions import Papel, UsuarioAutenticado, pode_gerenciar_setor
+from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_setor
 from app.modules.murais import repository
 from app.modules.murais.models import Aviso
 from app.modules.murais.schemas import AvisoAtualizar, AvisoCriar
 from app.modules.setores.service import buscar_setor
-
-SETOR_OBRIGATORIO = {"campo": "setor_id", "mensagem": "Informe o setor do aviso"}
 
 
 def listar_avisos(sessao: Session) -> list[Aviso]:
@@ -26,7 +24,7 @@ def buscar_aviso(sessao: Session, aviso_id: uuid.UUID) -> Aviso:
 
 
 def criar_aviso(sessao: Session, dados: AvisoCriar, usuario: UsuarioAutenticado) -> Aviso:
-  setor_id = _resolver_setor(dados.setor_id, usuario)
+  setor_id = resolver_setor(dados.setor_id, usuario, entidade="aviso")
   buscar_setor(sessao, setor_id)
   aviso = Aviso(
     titulo=dados.titulo,
@@ -49,7 +47,7 @@ def atualizar_aviso(
   sessao: Session, aviso_id: uuid.UUID, dados: AvisoAtualizar, usuario: UsuarioAutenticado
 ) -> Aviso:
   aviso = buscar_aviso(sessao, aviso_id)
-  _garantir_escopo(usuario, aviso.setor_id)
+  garantir_escopo(usuario, aviso.setor_id)
   campos = dados.model_dump(exclude_unset=True)
   if not campos:
     return aviso
@@ -62,21 +60,5 @@ def atualizar_aviso(
 
 def deletar_aviso(sessao: Session, aviso_id: uuid.UUID, usuario: UsuarioAutenticado) -> None:
   aviso = buscar_aviso(sessao, aviso_id)
-  _garantir_escopo(usuario, aviso.setor_id)
+  garantir_escopo(usuario, aviso.setor_id)
   repository.remover(sessao, aviso)
-
-
-def _resolver_setor(setor_id: uuid.UUID | None, usuario: UsuarioAutenticado) -> uuid.UUID:
-  if usuario.role == Papel.ADMIN_SETOR:
-    if usuario.setor_id is None or (setor_id is not None and setor_id != usuario.setor_id):
-      raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do seu setor")
-    return usuario.setor_id
-  escolhido = setor_id or usuario.setor_id
-  if escolhido is None:
-    raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, SETOR_OBRIGATORIO)
-  return escolhido
-
-
-def _garantir_escopo(usuario: UsuarioAutenticado, setor_id: uuid.UUID) -> None:
-  if not pode_gerenciar_setor(usuario, setor_id):
-    raise HTTPException(status.HTTP_403_FORBIDDEN, "Fora do seu setor")
