@@ -113,7 +113,7 @@ no pior caso, um **objeto órfão** no bucket (inofensivo), e nunca uma **linha 
 
 ### Task 1: Configuração do MinIO (Docker + settings)
 
-- [ ] **`docker-compose.yml`**, no `environment` do serviço `backend`:
+- [x] **`docker-compose.yml`**, no `environment` do serviço `backend`:
   ```yaml
       MINIO_ENDPOINT: armazenamento:9000
       MINIO_USUARIO: ${MINIO_ROOT_USER:-intranet}
@@ -122,8 +122,8 @@ no pior caso, um **objeto órfão** no bucket (inofensivo), e nunca uma **linha 
   ```
   O `depends_on: armazenamento: service_healthy` já existe. No MVP o backend usa a credencial root;
   trocar por um usuário/policy restrito ao bucket fica registrado como dívida técnica na doc.
-- [ ] **`.env.example` (raiz):** adicionar `MINIO_BUCKET=intranet` logo abaixo de `MINIO_ROOT_PASSWORD`.
-- [ ] **`backend/.env.example`** (para rodar fora do Docker):
+- [x] **`.env.example` (raiz):** adicionar `MINIO_BUCKET=intranet` logo abaixo de `MINIO_ROOT_PASSWORD`.
+- [x] **`backend/.env.example`** (para rodar fora do Docker):
   ```
   MINIO_ENDPOINT=localhost:9000
   MINIO_USUARIO=intranet
@@ -133,7 +133,7 @@ no pior caso, um **objeto órfão** no bucket (inofensivo), e nunca uma **linha 
   MINIO_SEGURO=false
   TAMANHO_MAXIMO_UPLOAD_MB=50
   ```
-- [ ] **`backend/app/core/config.py`**, em `Configuracoes`:
+- [x] **`backend/app/core/config.py`**, em `Configuracoes`:
   ```python
   minio_endpoint: str = "localhost:9000"
   minio_usuario: str
@@ -146,7 +146,7 @@ no pior caso, um **objeto órfão** no bucket (inofensivo), e nunca uma **linha 
   ```
   `minio_usuario`/`minio_senha` ficam obrigatórios, igual `jwt_secret`. Quem roda fora do Docker
   precisa adicioná-los ao `backend/.env` local (avisar no PR).
-- [ ] Commit: `chore(backend/geral): configura credenciais do minio no backend`
+- [x] Commit: `chore(backend/geral): configura credenciais do minio no backend`
 
 ### Task 2: Cliente compartilhado — `app/core/armazenamento.py`
 
@@ -217,8 +217,8 @@ com `raise ... from erro`; `S3Error` com `code == "NoSuchKey"` vira `ArquivoNaoE
   chamado depois do commit (ver a tabela de consistência).
 - `_executar(operacao)` é um helper privado que concentra o `try/except` e a conversão de erro.
 
-- [ ] Escrever o arquivo.
-- [ ] **`app/core/erros.py`:** dentro de `registrar_tratadores_de_erro`:
+- [x] Escrever o arquivo.
+- [x] **`app/core/erros.py`:** dentro de `registrar_tratadores_de_erro`:
   ```python
   @app.exception_handler(ArquivoNaoEncontrado)
   async def tratar_arquivo_nao_encontrado(request, erro) -> JSONResponse:
@@ -229,11 +229,11 @@ com `raise ... from erro`; `S3Error` com `code == "NoSuchKey"` vira `ArquivoNaoE
       logger.exception("Falha no armazenamento")  # log técnico, não vai pro banco
       return JSONResponse({"mensagem": "Armazenamento de arquivos indisponível"}, status_code=503)
   ```
-- [ ] Commit: `feat(backend/geral): adiciona cliente minio compartilhado no core`
+- [x] Commit: `feat(backend/geral): adiciona cliente minio compartilhado no core`
 
 ### Task 3: Model, migration e layout do bucket
 
-- [ ] **`documentos/models.py`**, seguindo `murais/models.py`:
+- [x] **`documentos/models.py`**, seguindo `murais/models.py`:
   ```python
   class CategoriaDocumento(StrEnum):
     POP = "pop"
@@ -271,12 +271,12 @@ com `raise ... from erro`; `S3Error` com `code == "NoSuchKey"` vira `ArquivoNaoE
     setor: Mapped[Setor] = relationship()
     # + @property autor_nome / setor_nome, igual Aviso
   ```
-- [ ] **Migration** `20260924_e5a7c9d2f4b6_cria_documentos.py`, `down_revision = 'c3d8e5f1a2b7'`
+- [x] **Migration** `20260924_e5a7c9d2f4b6_cria_documentos.py`, `down_revision = 'c3d8e5f1a2b7'`
   (a de avisos; conferir com `alembic heads` antes). Mesmo estilo de `..._cria_avisos.py`: `op.f(...)`
   para pk/fk/índices, `uq_documentos_chave_armazenamento`, índices em `autor_id`, `setor_id` e
   `categoria`. `downgrade` remove índices e tabela.
-- [ ] **`alembic/env.py`:** `import app.modules.documentos.models  # noqa: F401`.
-- [ ] **`documentos/storage.py`:** só o layout das chaves deste módulo, sem falar com o SDK:
+- [x] **`alembic/env.py`:** `import app.modules.documentos.models  # noqa: F401`.
+- [x] **`documentos/storage.py`:** só o layout das chaves deste módulo, sem falar com o SDK:
   ```python
   PREFIXO = "documentos/setores"
 
@@ -288,17 +288,19 @@ com `raise ... from erro`; `S3Error` com `code == "NoSuchKey"` vira `ArquivoNaoE
   def montar_chave(setor_id, categoria, documento_id, nome_arquivo) -> str:
     return f"{PREFIXO}/{setor_id}/{categoria}/{documento_id}/{sanitizar_nome(nome_arquivo)}"
   ```
-- [ ] Verificar: `docker compose up -d --build backend`, depois
+- [x] Verificar: `docker compose up -d --build backend`, depois
   `docker compose exec banco psql -U intranet -d intranet -c '\d documentos'`.
-- [ ] Commits: `feat(backend/documentos): cria tabela de documentos` e
+- [x] Commits: `feat(backend/documentos): cria tabela de documentos` e
   `feat(backend/documentos): define organizacao dos documentos no bucket`
 
 ### Task 4: Schemas e repository
 
-- [ ] **`schemas.py`:**
+- [x] **`schemas.py`:**
   - `DocumentoCriar` (vem via `Form`): `titulo` (1–200), `descricao: str | None`,
-    `categoria: CategoriaDocumento = OUTRO`, `setor_id: uuid.UUID | None = None`;
-    `ConfigDict(str_strip_whitespace=True)`.
+    `categoria: CategoriaDocumento = OUTRO`, `setor_id: uuid.UUID | None = None`,
+    `arquivo: UploadFile`; `ConfigDict(str_strip_whitespace=True)`. O arquivo fica **dentro** do
+    model porque o FastAPI não achata um model de `Form` quando há um `UploadFile` ao lado dele
+    (descoberto na implementação).
   - `DocumentoAtualizar` (JSON): `titulo`, `descricao`, `categoria`, todos opcionais, com o
     `rejeitar_nulo` de `AvisoAtualizar` para `titulo`/`categoria` (`descricao` aceita `null`
     para limpar).
@@ -306,10 +308,10 @@ com `raise ... from erro`; `S3Error` com `code == "NoSuchKey"` vira `ArquivoNaoE
     tamanho_bytes, setor_id, setor_nome, autor_id, autor_nome, criado_em, atualizado_em`.
     **Não** expõe `chave_armazenamento`, que é detalhe interno.
   - `FiltroDocumentos` (query): `setor_id`, `categoria`, `busca` (ilike em `titulo`), todos opcionais.
-- [ ] **`repository.py`:** mesmo formato de `murais/repository.py` (`_consulta_base` com
+- [x] **`repository.py`:** mesmo formato de `murais/repository.py` (`_consulta_base` com
   `selectinload` de autor/setor, `listar(sessao, filtro)` ordenado por `criado_em desc`,
   `buscar_por_id`, `adicionar`, `salvar`, `remover`).
-- [ ] Commit: `feat(backend/documentos): adiciona schemas e repository de documentos`
+- [x] Commit: `feat(backend/documentos): adiciona schemas e repository de documentos`
 
 ### Task 5: Service
 
@@ -343,18 +345,18 @@ com `raise ... from erro`; `S3Error` com `code == "NoSuchKey"` vira `ArquivoNaoE
 - `deletar_documento(sessao, id, usuario)`: `garantir_escopo` → `repository.remover` →
   `remover_arquivo(chave)`.
 
-- [ ] Commit: `feat(backend/documentos): adiciona service de upload e download`
+- [x] Commit: `feat(backend/documentos): adiciona service de upload e download`
 
 ### Task 6: Router + `main.py`
 
-- [ ] **`router.py`**, `APIRouter(prefix="/documentos", tags=["documentos"])`:
+- [x] **`router.py`**, `APIRouter(prefix="/documentos", tags=["documentos"])`:
 
 | Método | Rota | Dependency | Corpo | Resposta |
 |---|---|---|---|---|
 | GET | `/documentos` | `usuario_atual` | query `FiltroDocumentos` (`Annotated[..., Query()]`) | `list[DocumentoResposta]` |
 | GET | `/documentos/{documento_id}` | `usuario_atual` | – | `DocumentoResposta` |
 | GET | `/documentos/{documento_id}/download` | `usuario_atual` | query `inline: bool = False` | `StreamingResponse` |
-| POST | `/documentos` | `requer_admin` | multipart: `dados: Annotated[DocumentoCriar, Form()]`, `arquivo: UploadFile` | 201 `DocumentoResposta` |
+| POST | `/documentos` | `requer_admin` | multipart: `dados: Annotated[DocumentoCriar, Form()]` (arquivo incluso) | 201 `DocumentoResposta` |
 | PUT | `/documentos/{documento_id}` | `requer_admin` | JSON `DocumentoAtualizar` | `DocumentoResposta` |
 | PUT | `/documentos/{documento_id}/arquivo` | `requer_admin` | multipart `arquivo: UploadFile` | `DocumentoResposta` |
 | DELETE | `/documentos/{documento_id}` | `requer_admin` | – | 204 |
@@ -376,26 +378,26 @@ com `raise ... from erro`; `S3Error` com `code == "NoSuchKey"` vira `ArquivoNaoE
   As rotas são `def` síncronas, como no resto do projeto. O SDK do MinIO é síncrono e o FastAPI roda
   essas rotas no threadpool; o gerador síncrono também é consumido via threadpool pelo
   `StreamingResponse`.
-- [ ] **`main.py`:**
+- [x] **`main.py`:**
   - `lifespan` com `garantir_bucket()`. Se falhar, só `logger.warning` e segue, para a API subir mesmo
     com o MinIO fora (o `/saude` denuncia). `app = FastAPI(title=..., lifespan=lifespan)`.
   - `/saude` passa a devolver `{"status", "banco", "armazenamento"}` e responde 503 se qualquer um
     estiver indisponível.
   - `app.include_router(roteador_documentos)`.
-- [ ] Commit: `feat(backend/documentos): expoe endpoints de documentos`
+- [x] Commit: `feat(backend/documentos): expoe endpoints de documentos`
 
 ### Task 7: Documentação
 
-- [ ] **`CONTEXT.md`:** trocar a nota "escopo de leitura ... ainda não foi discutido" pela decisão:
+- [x] **`CONTEXT.md`:** trocar a nota "escopo de leitura ... ainda não foi discutido" pela decisão:
   leitura institucional, e a edição segue a Regra de escopo de edição. Adicionar Documento na lista
   "Vale pra Aviso, Evento e FAQ".
-- [ ] **`docs/arquitetura-backend.md`:** na árvore de pastas, adicionar `core/armazenamento.py`
+- [x] **`docs/arquitetura-backend.md`:** na árvore de pastas, adicionar `core/armazenamento.py`
   (cliente compartilhado) e ajustar o comentário de `documentos/storage.py` (layout das chaves).
   Nova seção "Armazenamento (MinIO)" com o layout do bucket, a tabela de consistência e a dívida
   técnica (credencial root, limpeza de órfãos). Marcar como resolvida a decisão "MinIO
   self-hosted" (container próprio no compose) só se o time confirmar; se não, deixar como está.
-- [ ] **`README.md`:** incluir `MINIO_BUCKET` na lista de variáveis com valor padrão.
-- [ ] Commit: `docs(backend/documentos): registra organizacao do armazenamento de documentos`
+- [x] **`README.md`:** incluir `MINIO_BUCKET` na lista de variáveis com valor padrão.
+- [x] Commit: `docs(backend/documentos): registra organizacao do armazenamento de documentos`
 
 ---
 

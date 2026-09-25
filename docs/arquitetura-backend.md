@@ -30,12 +30,13 @@ backend/
         schemas.py
         router.py
         service.py         # lógica de upload/download, fala com o MinIO
-        storage.py          # cliente MinIO isolado
+        storage.py          # layout das chaves do módulo no bucket (usa core/armazenamento.py)
       setores/
       duvidas/
       logs/
     core/
       config.py           # env vars, settings
+      armazenamento.py     # cliente MinIO compartilhado entre os módulos
       security.py          # hash de senha, criação/validação de JWT
       permissions.py        # lógica de RBAC + escopo por setor
       database.py            # engine, sessão do SQLAlchemy
@@ -49,6 +50,42 @@ backend/
 Separação `router.py` / `service.py`: o router só valida input (via Pydantic) e delega ao service; o service concentra a lógica de negócio, facilitando reuso e testes sem precisar simular request HTTP.
 
 Documentos: Postgres guarda apenas os **metadados** do arquivo; o binário fica no MinIO — evita inchar o banco com blobs.
+
+## Armazenamento (MinIO)
+
+O cliente MinIO mora em `core/armazenamento.py` e é compartilhado entre os módulos. Ele não sabe
+nada de domínio: recebe a chave completa do objeto e expõe `enviar_arquivo`, `ler_arquivo`,
+`mover_arquivo` e `remover_arquivo`. Falha do MinIO vira `ErroArmazenamento`, que
+`core/erros.py` traduz para 503 (`ArquivoNaoEncontrado` vira 404). O bucket é criado no startup
+da API, e o `/saude` também checa o MinIO.
+
+Um bucket só (`MINIO_BUCKET`, padrão `intranet`), com o nome do módulo como prefixo de primeiro
+nível. Cada módulo define o próprio layout; o de documentos fica em `documentos/storage.py`:
+
+```
+documentos/setores/{setor_id}/{categoria}/{documento_id}/{nome-sanitizado}.{ext}
+```
+
+O setor entra pelo id, e não pelo nome, porque setor pode ser renomeado. Se a categoria do
+documento mudar, o objeto é movido para a pasta nova.
+
+Postgres e MinIO não compartilham transação. A ordem das operações garante que uma falha deixe,
+no pior caso, um **objeto órfão** no bucket, e nunca uma linha sem arquivo:
+
+| Operação | Ordem |
+|---|---|
+| Criar | envia objeto → insere linha; se o commit falhar, remove o objeto |
+| Substituir arquivo | envia objeto novo → commit → remove o antigo |
+| Mudar categoria | move objeto → commit; se o commit falhar, move de volta |
+| Excluir | commit da remoção → remove objeto (falha vira só `logger.warning`) |
+
+O tipo do arquivo salvo e servido no download vem de uma lista fechada de extensões
+(`documentos/service.py`), nunca do `content-type` enviado pelo cliente — evita servir um
+`text/html` enviado como documento. O download passa pelo backend (stream), então o MinIO não
+precisa ficar exposto ao navegador.
+
+Dívidas técnicas: o backend usa a credencial root do MinIO (o ideal é um usuário com policy
+restrita ao bucket) e não há rotina de limpeza de objetos órfãos.
 
 ## Autenticação (JWT)
 
