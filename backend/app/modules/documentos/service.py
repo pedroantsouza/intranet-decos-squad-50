@@ -1,4 +1,3 @@
-import os
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime
@@ -8,6 +7,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core import armazenamento
+from app.core.arquivos import TIPOS_DOCUMENTO, validar_arquivo
 from app.core.config import configuracoes
 from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_setor
 from app.modules.documentos import repository
@@ -16,53 +16,8 @@ from app.modules.documentos.schemas import DocumentoAtualizar, DocumentoCriar, F
 from app.modules.documentos.storage import montar_chave
 from app.modules.setores.service import buscar_setor
 
-# O tipo salvo e servido no download sai daqui, nunca do content-type do cliente: assim
-# ninguém sobe um text/html que depois seria aberto inline no navegador.
-TIPOS_PERMITIDOS: dict[str, str] = {
-  ".pdf": "application/pdf",
-  ".doc": "application/msword",
-  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ".xls": "application/vnd.ms-excel",
-  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ".ppt": "application/vnd.ms-powerpoint",
-  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  ".odt": "application/vnd.oasis.opendocument.text",
-  ".ods": "application/vnd.oasis.opendocument.spreadsheet",
-  ".odp": "application/vnd.oasis.opendocument.presentation",
-  ".txt": "text/plain; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-}
-
-
-def _erro_arquivo(codigo: int, mensagem: str) -> HTTPException:
-  return HTTPException(codigo, {"campo": "arquivo", "mensagem": mensagem})
-
-
 def _validar_arquivo(arquivo: UploadFile) -> tuple[str, str, int]:
-  """Devolve (nome_arquivo, tipo_conteudo, tamanho_bytes)."""
-  nome = (arquivo.filename or "").strip()
-  if not nome:
-    raise _erro_arquivo(status.HTTP_422_UNPROCESSABLE_CONTENT, "Envie um arquivo")
-  tipo_conteudo = TIPOS_PERMITIDOS.get(os.path.splitext(nome)[1].lower())
-  if tipo_conteudo is None:
-    raise _erro_arquivo(
-      status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Tipo de arquivo não permitido"
-    )
-  tamanho = arquivo.size
-  if tamanho is None:
-    arquivo.file.seek(0, os.SEEK_END)
-    tamanho = arquivo.file.tell()
-  arquivo.file.seek(0)
-  if tamanho == 0:
-    raise _erro_arquivo(status.HTTP_422_UNPROCESSABLE_CONTENT, "Arquivo vazio")
-  limite_mb = configuracoes.tamanho_maximo_upload_mb
-  if tamanho > limite_mb * 1024 * 1024:
-    raise _erro_arquivo(
-      status.HTTP_413_CONTENT_TOO_LARGE, f"Arquivo maior que o limite de {limite_mb} MB"
-    )
-  return nome[:255], tipo_conteudo, tamanho
+  return validar_arquivo(arquivo, TIPOS_DOCUMENTO, configuracoes.tamanho_maximo_upload_mb)
 
 
 def listar_documentos(sessao: Session, filtro: FiltroDocumentos) -> list[Documento]:
