@@ -33,22 +33,14 @@ interface PropriedadesModalAviso {
   usuario: Usuario | null
 }
 
-function lerComoDataUrl(arquivo: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const leitor = new FileReader()
-    leitor.onload = () => resolve(leitor.result as string)
-    leitor.onerror = () => reject(leitor.error)
-    leitor.readAsDataURL(arquivo)
-  })
-}
-
 // Este componente só é montado enquanto o modal está aberto — quem
 // controla isso é o pai (PaginaMural), que também troca a `key` a cada
 // abertura para remontar o formulário do zero (evita resetar estado local
 // via setState dentro de efeito, que causa re-renders em cascata).
 function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesModalAviso) {
   const editando = !!avisoEditando
-  const setorTravado = usuario?.role === 'admin_setor'
+  // O backend não troca o setor de um aviso existente (AvisoAtualizar não tem setor_id).
+  const setorTravado = usuario?.role === 'admin_setor' || editando
   const salvarAviso = useSalvarAviso()
   const inputArquivoRef = useRef<HTMLInputElement>(null)
   const [anexos, setAnexos] = useState<AnexoLocal[]>(
@@ -88,22 +80,18 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
     setAnexos((atual) => atual.filter((_, i) => i !== indice))
   }
 
-  async function aoSubmeter(valores: ValoresFormularioAviso) {
-    // O design só tem upload genérico de "anexos" (sem coluna própria em
-    // schema.sql). Como chave_imagem existe na tabela `avisos`, usamos o
-    // primeiro anexo de imagem — se houver — para preencher a capa do
-    // aviso; os demais ficam só como metadado mockado (ver types.ts).
-    const arquivoImagem = anexos.find((a) => a.arquivo?.type.startsWith('image/'))?.arquivo
-    const chaveImagem = arquivoImagem ? await lerComoDataUrl(arquivoImagem) : (avisoEditando?.chaveImagem ?? null)
-
+  function aoSubmeter(valores: ValoresFormularioAviso) {
+    // TODO integração: `chave_imagem` no backend é a chave do objeto no
+    // MinIO (até 500 caracteres), não o arquivo em si. Enquanto não houver
+    // rota de upload, os anexos ficam só no formulário e a capa atual do
+    // aviso é mantida como está.
     const dados: NovoAviso = {
       titulo: valores.titulo.trim(),
       conteudo: valores.conteudo.trim(),
       categoria: valores.categoria,
       setorId: valores.setorId,
       fixado: valores.fixado,
-      chaveImagem,
-      anexos: anexos.map(({ nome, tamanho }) => ({ nome, tamanho })),
+      chaveImagem: avisoEditando?.chaveImagem ?? null,
     }
 
     salvarAviso.mutate(
