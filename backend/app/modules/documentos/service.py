@@ -77,8 +77,9 @@ def buscar_documento(sessao: Session, documento_id: uuid.UUID) -> Documento:
 
 
 def criar_documento(
-  sessao: Session, dados: DocumentoCriar, arquivo: UploadFile, usuario: UsuarioAutenticado
+  sessao: Session, dados: DocumentoCriar, usuario: UsuarioAutenticado
 ) -> Documento:
+  arquivo = dados.arquivo
   setor_id = resolver_setor(dados.setor_id, usuario, entidade="documento")
   buscar_setor(sessao, setor_id)
   nome_arquivo, tipo_conteudo, tamanho = _validar_arquivo(arquivo)

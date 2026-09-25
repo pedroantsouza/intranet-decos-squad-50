@@ -1,13 +1,15 @@
 import uuid
 from datetime import datetime
 
+from fastapi import UploadFile
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.modules.documentos.models import CategoriaDocumento
 
 
 class DocumentoCriar(BaseModel):
-  """Chega como multipart/form-data, junto do arquivo."""
+  """Chega como multipart/form-data. O arquivo fica dentro do model porque o FastAPI não
+  achata um model de Form quando há um UploadFile declarado ao lado dele."""
 
   model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -15,6 +17,7 @@ class DocumentoCriar(BaseModel):
   descricao: str | None = None
   categoria: CategoriaDocumento = CategoriaDocumento.OUTRO
   setor_id: uuid.UUID | None = None
+  arquivo: UploadFile
 
 
 class DocumentoAtualizar(BaseModel):
