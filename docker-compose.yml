@@ -44,6 +44,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       ACCESS_TOKEN_MINUTOS: ${ACCESS_TOKEN_MINUTOS:-30}
       REFRESH_TOKEN_DIAS: ${REFRESH_TOKEN_DIAS:-7}
+      MINIO_ENDPOINT: armazenamento:9000
+      MINIO_USUARIO: ${MINIO_ROOT_USER:-intranet}
+      MINIO_SENHA: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD no .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-intranet}
     depends_on:
       banco:
         condition: service_healthy
