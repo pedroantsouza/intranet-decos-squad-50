@@ -31,15 +31,19 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
           <div
             className="absolute inset-0 bg-slate-700 bg-cover bg-center"
             style={
-              aviso.chaveImagem
-                ? { backgroundImage: `url(${aviso.chaveImagem})` }
+              aviso.urlImagem
+                ? { backgroundImage: `url(${aviso.urlImagem})` }
                 : { background: 'linear-gradient(135deg,#1e293b,#3b000e)' }
             }
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/5" />
           <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-8">
             <div className="flex items-center gap-3 text-[10.5px] tracking-wide text-white/80">
-              <BadgeCategoria categoria={aviso.categoria} className="bg-white/15" />
+              <BadgeCategoria
+                categoria={aviso.categoria}
+                comImagem={!!aviso.urlImagem}
+                className="bg-white/15"
+              />
               <span>
                 {formatarDiaMes(aviso.criadoEm)} · {formatarHora(aviso.criadoEm)}
               </span>

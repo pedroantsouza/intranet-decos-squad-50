@@ -1,16 +1,29 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { toast } from 'sonner'
 import Botao from '../../../shared/components/Botao'
 import Campo from '../../../shared/components/Campo'
 import Input from '../../../shared/components/Input'
 import Modal from '../../../shared/components/Modal'
 import Select from '../../../shared/components/Select'
 import Textarea from '../../../shared/components/Textarea'
-import { IconeArquivoTexto, IconeClipe, IconeX } from '../../../shared/components/icones'
+import { IconeArquivoTexto, IconeClipe, IconeImagem, IconeX } from '../../../shared/components/icones'
 import type { Usuario } from '../../../lib/auth/tipos'
 import { useSalvarAviso } from '../hooks/useSalvarAviso'
 import { formatarTamanhoArquivo } from '../formatadores'
-import { ROTULO_CATEGORIA, type Aviso, type CategoriaAviso, type NovoAviso, type Setor } from '../types'
+import {
+  EXTENSOES_ANEXO,
+  LIMITE_IMAGEM_MB,
+  LIMITE_UPLOAD_MB,
+  MAXIMO_ANEXOS,
+  ROTULO_CATEGORIA,
+  TIPOS_IMAGEM,
+  type Aviso,
+  type CategoriaAviso,
+  type Setor,
+} from '../types'
+
+const MB = 1024 * 1024
 
 interface ValoresFormularioAviso {
   titulo: string
@@ -20,10 +33,14 @@ interface ValoresFormularioAviso {
   fixado: boolean
 }
 
-interface AnexoLocal {
-  nome: string
-  tamanho: string
-  arquivo?: File
+/** Anexo que já está no backend (`id`) ou que ainda vai ser enviado (`arquivo`). */
+type AnexoLocal =
+  | { id: string; nome: string; tamanho: string; arquivo?: undefined }
+  | { id?: undefined; nome: string; tamanho: string; arquivo: File }
+
+function extensao(nome: string) {
+  const ponto = nome.lastIndexOf('.')
+  return ponto === -1 ? '' : nome.slice(ponto).toLowerCase()
 }
 
 interface PropriedadesModalAviso {
@@ -43,10 +60,25 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
   const setorTravado = usuario?.role === 'admin_setor' || editando
   const salvarAviso = useSalvarAviso()
   const inputArquivoRef = useRef<HTMLInputElement>(null)
+  const inputImagemRef = useRef<HTMLInputElement>(null)
   const [anexos, setAnexos] = useState<AnexoLocal[]>(
-    () => avisoEditando?.anexos.map((a) => ({ nome: a.nome, tamanho: a.tamanho })) ?? [],
+    () => avisoEditando?.anexos.map((a) => ({ id: a.id, nome: a.nome, tamanho: a.tamanho })) ?? [],
   )
+  const [anexosRemovidos, setAnexosRemovidos] = useState<string[]>([])
   const [arrastando, setArrastando] = useState(false)
+
+  // A URL da pré-visualização nasce e morre nos handlers; o ref cobre o desmonte do modal.
+  const [imagemNova, setImagemNova] = useState<{ arquivo: File; url: string } | null>(null)
+  const [removerImagemAtual, setRemoverImagemAtual] = useState(false)
+  const urlPreviaRef = useRef<string | null>(null)
+  useEffect(
+    () => () => {
+      if (urlPreviaRef.current) URL.revokeObjectURL(urlPreviaRef.current)
+    },
+    [],
+  )
+  const urlImagemExibida =
+    imagemNova?.url ?? (removerImagemAtual ? null : (avisoEditando?.urlImagem ?? null))
 
   const {
     register,
@@ -66,9 +98,49 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
   const [titulo, conteudo] = useWatch({ control, name: ['titulo', 'conteudo'] })
   const valido = !!titulo?.trim() && !!conteudo?.trim()
 
+  function trocarImagemNova(arquivo: File | null) {
+    if (urlPreviaRef.current) URL.revokeObjectURL(urlPreviaRef.current)
+    urlPreviaRef.current = arquivo ? URL.createObjectURL(arquivo) : null
+    setImagemNova(arquivo && urlPreviaRef.current ? { arquivo, url: urlPreviaRef.current } : null)
+  }
+
+  function selecionarImagem(lista: FileList | null) {
+    const arquivo = lista?.[0]
+    if (!arquivo) return
+    if (!TIPOS_IMAGEM.includes(arquivo.type)) {
+      toast.error('A capa precisa ser PNG, JPG ou WEBP.')
+      return
+    }
+    if (arquivo.size > LIMITE_IMAGEM_MB * MB) {
+      toast.error(`A capa pode ter no máximo ${LIMITE_IMAGEM_MB} MB.`)
+      return
+    }
+    trocarImagemNova(arquivo)
+  }
+
+  function removerImagem() {
+    trocarImagemNova(null)
+    setRemoverImagemAtual(true)
+  }
+
   function adicionarAnexos(lista: FileList | null) {
     if (!lista || lista.length === 0) return
-    const novos = Array.from(lista).map((arquivo) => ({
+    const arquivos = Array.from(lista)
+    if (anexos.length + arquivos.length > MAXIMO_ANEXOS) {
+      toast.error(`O aviso pode ter no máximo ${MAXIMO_ANEXOS} anexos.`)
+      return
+    }
+    const invalido = arquivos.find((arquivo) => !EXTENSOES_ANEXO.includes(extensao(arquivo.name)))
+    if (invalido) {
+      toast.error(`Tipo de arquivo não permitido: ${invalido.name}`)
+      return
+    }
+    const grande = arquivos.find((arquivo) => arquivo.size > LIMITE_UPLOAD_MB * MB)
+    if (grande) {
+      toast.error(`${grande.name} passa do limite de ${LIMITE_UPLOAD_MB} MB.`)
+      return
+    }
+    const novos = arquivos.map((arquivo) => ({
       nome: arquivo.name,
       tamanho: formatarTamanhoArquivo(arquivo.size),
       arquivo,
@@ -77,25 +149,55 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
   }
 
   function removerAnexo(indice: number) {
+    const anexoId = anexos[indice]?.id
+    if (anexoId) setAnexosRemovidos((atual) => [...atual, anexoId])
     setAnexos((atual) => atual.filter((_, i) => i !== indice))
   }
 
   function aoSubmeter(valores: ValoresFormularioAviso) {
-    // TODO integração: `chave_imagem` no backend é a chave do objeto no
-    // MinIO (até 500 caracteres), não o arquivo em si. Enquanto não houver
-    // rota de upload, os anexos ficam só no formulário e a capa atual do
-    // aviso é mantida como está.
-    const dados: NovoAviso = {
+    const anexosNovos = anexos.flatMap((anexo) => (anexo.arquivo ? [anexo.arquivo] : []))
+
+    // Na criação, capa e anexos vão numa requisição só; na edição, os anexos novos vão juntos.
+    const tamanhoEnvio =
+      anexosNovos.reduce((total, arquivo) => total + arquivo.size, 0) +
+      (imagemNova && !editando ? imagemNova.arquivo.size : 0)
+    if (tamanhoEnvio > LIMITE_UPLOAD_MB * MB) {
+      toast.error(`Os arquivos somam mais de ${LIMITE_UPLOAD_MB} MB. Envie menos de uma vez.`)
+      return
+    }
+
+    const texto = {
       titulo: valores.titulo.trim(),
       conteudo: valores.conteudo.trim(),
       categoria: valores.categoria,
-      setorId: valores.setorId,
       fixado: valores.fixado,
-      chaveImagem: avisoEditando?.chaveImagem ?? null,
+    }
+
+    if (avisoEditando) {
+      salvarAviso.mutate(
+        {
+          id: avisoEditando.id,
+          dados: texto,
+          arquivos: {
+            imagem: imagemNova ? imagemNova.arquivo : removerImagemAtual ? null : undefined,
+            anexosNovos,
+            anexosRemovidos,
+          },
+        },
+        { onSuccess: aoFechar },
+      )
+      return
     }
 
     salvarAviso.mutate(
-      { id: avisoEditando?.id, dados },
+      {
+        dados: {
+          ...texto,
+          setorId: valores.setorId,
+          imagem: imagemNova?.arquivo ?? null,
+          anexos: anexosNovos,
+        },
+      },
       { onSuccess: aoFechar },
     )
   }
@@ -103,6 +205,53 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
   return (
     <Modal aberto titulo={editando ? 'Editar aviso' : 'Novo aviso'} aoFechar={aoFechar}>
       <form onSubmit={handleSubmit(aoSubmeter)} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] tracking-wide text-slate-500">IMAGEM DE CAPA</span>
+          {urlImagemExibida ? (
+            <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-1.5">
+              <img
+                src={urlImagemExibida}
+                alt="Pré-visualização da capa"
+                className="h-[96px] w-[160px] flex-none rounded-md object-cover"
+              />
+              <div className="ml-auto flex gap-2 pr-1.5">
+                <Botao variante="secundario" onClick={() => inputImagemRef.current?.click()}>
+                  Trocar
+                </Botao>
+                <Botao variante="secundario" onClick={removerImagem}>
+                  Remover
+                </Botao>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => inputImagemRef.current?.click()}
+              className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-left"
+            >
+              <IconeImagem tamanho={20} className="text-[#800020]" />
+              <div className="flex flex-col leading-snug">
+                <span className="text-[13px] font-semibold text-slate-800">
+                  Clique para selecionar uma imagem
+                </span>
+                <span className="text-[11.5px] text-slate-500">
+                  PNG, JPG ou WEBP até {LIMITE_IMAGEM_MB} MB
+                </span>
+              </div>
+            </button>
+          )}
+          <input
+            ref={inputImagemRef}
+            type="file"
+            accept={TIPOS_IMAGEM.join(',')}
+            className="hidden"
+            onChange={(e) => {
+              selecionarImagem(e.target.files)
+              e.target.value = ''
+            }}
+          />
+        </div>
+
         <div className="flex flex-col gap-2">
           <span className="text-[11px] tracking-wide text-slate-500">ANEXOS</span>
           <div
@@ -126,20 +275,28 @@ function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesM
               <span className="text-[13px] font-semibold text-slate-800">
                 {arrastando ? 'Solte os arquivos aqui' : 'Arraste arquivos ou clique para selecionar'}
               </span>
-              <span className="text-[11.5px] text-slate-500">PDF, imagem, DOC ou XLS até 20 MB</span>
+              <span className="text-[11.5px] text-slate-500">
+                PDF, DOC, XLS, PPT, ODT, TXT ou imagem · até {MAXIMO_ANEXOS} arquivos de{' '}
+                {LIMITE_UPLOAD_MB} MB
+              </span>
             </div>
             <input
               ref={inputArquivoRef}
               type="file"
               multiple
+              accept={EXTENSOES_ANEXO.join(',')}
               className="hidden"
-              onChange={(e) => adicionarAnexos(e.target.files)}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                adicionarAnexos(e.target.files)
+                e.target.value = ''
+              }}
             />
           </div>
           {anexos.length > 0 && (
             <div className="flex flex-col gap-2">
               {anexos.map((anexo, i) => (
-                <div key={`${anexo.nome}-${i}`} className="flex items-center gap-2.5 rounded-lg bg-slate-100 px-3 py-2.5">
+                <div key={anexo.id ?? `${anexo.nome}-${i}`} className="flex items-center gap-2.5 rounded-lg bg-slate-100 px-3 py-2.5">
                   <IconeArquivoTexto tamanho={16} className="text-[#800020]" />
                   <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-slate-800">
                     {anexo.nome}

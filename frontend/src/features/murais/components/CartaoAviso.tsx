@@ -49,16 +49,16 @@ function CartaoAviso({
           </div>
           <BadgeCategoria
             categoria={aviso.categoria}
-            comImagem={!!aviso.chaveImagem}
+            comImagem={!!aviso.urlImagem}
             className="ml-auto"
           />
         </div>
         <div className="mb-3.5 h-0.5 rounded-full bg-[#800020]" />
-        {aviso.chaveImagem && (
+        {aviso.urlImagem && (
           <div className="mb-3.5 rounded-[10px] border border-slate-200 bg-slate-50 p-1.5">
             <div
               className="h-[190px] w-full rounded-md bg-cover bg-center"
-              style={{ backgroundImage: `url(${aviso.chaveImagem})` }}
+              style={{ backgroundImage: `url(${aviso.urlImagem})` }}
             />
           </div>
         )}
