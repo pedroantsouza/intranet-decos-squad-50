@@ -69,18 +69,37 @@ documentos/setores/{setor_id}/{categoria}/{documento_id}/{nome-sanitizado}.{ext}
 O setor entra pelo id, e não pelo nome, porque setor pode ser renomeado. Se a categoria do
 documento mudar, o objeto é movido para a pasta nova.
 
+O mural guarda a capa e os anexos de cada aviso (`murais/storage.py`):
+
+```
+murais/avisos/{aviso_id}/capa/{uuid}.{ext}
+murais/avisos/{aviso_id}/anexos/{anexo_id}/{nome-sanitizado}.{ext}
+```
+
+A capa ganha um uuid novo a cada troca. A API expõe esse uuid como `versao_imagem`, e o
+frontend monta a URL `/murais/avisos/{id}/imagem?v={versao_imagem}`, que é servida com
+`Cache-Control: immutable`: capa nova é sempre URL nova, sem cache velho.
+
+A capa é o único arquivo servido **sem autenticação** (`GET /murais/avisos/{id}/imagem`): é
+conteúdo institucional que todo colaborador já vê, o id do aviso é um UUID que não dá para
+adivinhar, e a tag `<img>` não envia o header `Authorization`. Os anexos seguem a regra dos
+documentos: download autenticado, via stream. Capa aceita png/jpg/webp até 5 MB; anexos usam
+a mesma lista de tipos e o mesmo `TAMANHO_MAXIMO_UPLOAD_MB` dos documentos, até 10 por aviso.
+Ao excluir o aviso, a FK com `ON DELETE CASCADE` apaga os anexos no banco e depois todos os
+objetos do aviso são removidos do bucket.
+
 Postgres e MinIO não compartilham transação. A ordem das operações garante que uma falha deixe,
 no pior caso, um **objeto órfão** no bucket, e nunca uma linha sem arquivo:
 
 | Operação | Ordem |
 |---|---|
 | Criar | envia objeto → insere linha; se o commit falhar, remove o objeto |
-| Substituir arquivo | envia objeto novo → commit → remove o antigo |
+| Substituir arquivo / capa | envia objeto novo → commit → remove o antigo |
 | Mudar categoria | move objeto → commit; se o commit falhar, move de volta |
 | Excluir | commit da remoção → remove objeto (falha vira só `logger.warning`) |
 
 O tipo do arquivo salvo e servido no download vem de uma lista fechada de extensões
-(`documentos/service.py`), nunca do `content-type` enviado pelo cliente — evita servir um
+(`core/arquivos.py`), nunca do `content-type` enviado pelo cliente — evita servir um
 `text/html` enviado como documento. O download passa pelo backend (stream), então o MinIO não
 precisa ficar exposto ao navegador.
 

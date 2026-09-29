@@ -27,6 +27,14 @@ Arquivo pertencente a um setor (ex: POP). O metadado (nome, setor, quem fez uplo
 **Mural**:
 Módulo de comunicados/avisos do setor ou do hospital.
 
+**Capa (do aviso)**:
+Imagem opcional exibida no card, no carrossel de destaques e no detalhe do aviso. Uma por aviso; o binário mora no MinIO. É o único arquivo acessível sem login (ver `docs/arquitetura-backend.md`).
+_Avoid_: Imagem de destaque, banner
+
+**Anexo (do aviso)**:
+Arquivo baixável anexado a um aviso (até 10), com os mesmos tipos permitidos de Documento. Pertence ao aviso e some com ele; não é um Documento do setor.
+_Avoid_: Documento (quando se fala do arquivo do aviso)
+
 **Central de Dúvidas / FAQ**:
 Lista de perguntas e respostas cadastrada diretamente por um admin (`admin_setor` ou `superadmin`) — não existe envio de pergunta por colaborador `comum`. Guarda o setor de quem criou (mesma regra de escopo de edição de Aviso/Evento).
 _Avoid_: Dúvida enviada, ticket
