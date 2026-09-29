@@ -6,12 +6,12 @@ export type { ErroCampo, Setor }
  * Modelo alinhado a `AvisoResposta` de backend/app/modules/murais/schemas.py,
  * já em camelCase (a conversão fica em ./api.ts).
  */
-export type CategoriaAviso = 'comunicado' | 'promocao' | 'evento'
+export type CategoriaAviso = 'comunicado' | 'promocao' | 'convite'
 
 export const ROTULO_CATEGORIA: Record<CategoriaAviso, string> = {
   comunicado: 'Comunicado',
   promocao: 'Promoção',
-  evento: 'Evento',
+  convite: 'Convite',
 }
 
 /** Limites de backend/app/modules/murais/service.py e core/arquivos.py. */

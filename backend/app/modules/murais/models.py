@@ -23,13 +23,13 @@ from app.modules.usuarios.models import Usuario
 class CategoriaAviso(StrEnum):
   COMUNICADO = "comunicado"
   PROMOCAO = "promocao"
-  EVENTO = "evento"
+  CONVITE = "convite"
 
 
 class Aviso(Base):
   __tablename__ = "avisos"
   __table_args__ = (
-    CheckConstraint("categoria IN ('comunicado', 'promocao', 'evento')", name="categoria"),
+    CheckConstraint("categoria IN ('comunicado', 'promocao', 'convite')", name="categoria"),
   )
 
   id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)

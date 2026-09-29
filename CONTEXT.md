@@ -25,7 +25,8 @@ _Avoid_: Log de auditoria
 Arquivo pertencente a um setor (ex: POP). O metadado (nome, setor, quem fez upload) mora no Postgres; o binário mora no MinIO — são armazenados separadamente por design.
 
 **Mural**:
-Módulo de comunicados/avisos do setor ou do hospital.
+Módulo de comunicados/avisos do setor ou do hospital. Cada Aviso tem uma categoria: `comunicado`, `promocao` ou `convite`. `convite` é o aviso que chama as pessoas para algo; não confundir com **Evento**, que é o item do Calendário.
+_Avoid_: categoria "evento" de Aviso
 
 **Capa (do aviso)**:
 Imagem opcional exibida no card, no carrossel de destaques e no detalhe do aviso. Uma por aviso; o binário mora no MinIO. É o único arquivo acessível sem login (ver `docs/arquitetura-backend.md`).
