@@ -13,6 +13,7 @@ from app.modules.setores.schemas import RamalAtualizar, RamalCriar, SetorAtualiz
 
 NOME_DUPLICADO = {"campo": "nome", "mensagem": "Já existe um setor com esse nome"}
 SETOR_VINCULADO = "Setor possui registros vinculados e não pode ser removido"
+RAMAL_DUPLICADO = {"campo": "numero", "mensagem": "Esse ramal já está cadastrado no setor"}
 
 
 # Setores
@@ -46,7 +47,7 @@ def atualizar_setor(sessao: Session, setor_id: uuid.UUID, dados: SetorAtualizar)
 
 def deletar_setor(sessao: Session, setor_id: uuid.UUID) -> None:
     setor = buscar_setor(sessao, setor_id)
-    # Ramais caem junto (cascade); outros vínculos (usuários, documentos...) bloqueiam.
+    # Ramais caem junto (ON DELETE CASCADE); outros vínculos (usuários, documentos...) bloqueiam.
     with _conflito_vira_409(sessao, SETOR_VINCULADO):
         repository.remover(sessao, setor)
 
@@ -64,7 +65,8 @@ def criar_ramal(
     setor = buscar_setor(sessao, setor_id)
     garantir_escopo(usuario, setor.id)
     ramal = Ramal(numero=dados.numero, setor_id=setor.id)
-    repository.adicionar(sessao, ramal)
+    with _conflito_vira_409(sessao, RAMAL_DUPLICADO):
+        repository.adicionar(sessao, ramal)
     return ramal
 
 
@@ -74,7 +76,8 @@ def atualizar_ramal(
     ramal = _buscar_ramal(sessao, ramal_id)
     garantir_escopo(usuario, ramal.setor_id)
     ramal.numero = dados.numero
-    repository.salvar(sessao)
+    with _conflito_vira_409(sessao, RAMAL_DUPLICADO):
+        repository.salvar(sessao)
     return ramal
 
 
