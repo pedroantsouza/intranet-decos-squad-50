@@ -1,11 +1,13 @@
+import type { ErroCampo, Setor } from '../../shared/types'
+
+export type { ErroCampo, Setor }
+
 /**
- * Modelo alinhado à tabela `avisos` de backend/sql/schema.sql
- * (id, titulo, conteudo, chave_imagem, autor_id, setor_id, criado_em,
- * atualizado_em)
+ * Modelo alinhado a `AvisoResposta` de backend/app/modules/murais/schemas.py,
+ * já em camelCase (a conversão fica em ./api.ts).
  *
- * `categoria` e `fixado` são exibidos no design mas ainda NÃO existem em
- * schema.sql — ficam mockados aqui até o backend ganhar essas colunas
- * (migration pendente). Ver features/murais/api.ts.
+ * `anexos` ainda não existe no backend — só vive no formulário até o upload
+ * (MinIO) ganhar rota. Ver features/murais/api.ts.
  */
 export type CategoriaAviso = 'comunicado' | 'promocao' | 'evento'
 
@@ -13,14 +15,6 @@ export const ROTULO_CATEGORIA: Record<CategoriaAviso, string> = {
   comunicado: 'Comunicado',
   promocao: 'Promoção',
   evento: 'Evento',
-}
-
-/** Setor mínimo, só o suficiente para os seletores do mural. Já é descrito
- * em docs/arquitetura-frontend.md como tipo compartilhado (`Setor`) a
- * mover para `shared/types.ts` quando outro módulo precisar dele também. */
-export interface Setor {
-  id: string
-  nome: string
 }
 
 export interface Anexo {
@@ -55,10 +49,3 @@ export interface NovoAviso {
 }
 
 export type EdicaoAviso = Partial<NovoAviso>
-
-/** Contrato de erro de validação de campo vindo do backend, conforme
- * docs/arquitetura-frontend.md. */
-export interface ErroCampo {
-  campo: string
-  mensagem: string
-}

@@ -11,11 +11,11 @@ interface PropriedadesPainelProximosEventos {
 }
 
 function descreverEvento(evento: Evento): string {
-  const local = evento.descricao?.trim() || 'Local a definir'
   const horario = [formatarHora(evento.dataInicio), evento.dataFim ? formatarHora(evento.dataFim) : null]
     .filter(Boolean)
     .join(' às ')
-  return `${local} · ${horario}`
+  const descricao = evento.descricao?.trim()
+  return descricao ? `${horario} · ${descricao}` : horario
 }
 
 function PainelProximosEventos({

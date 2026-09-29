@@ -1,27 +1,30 @@
 import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app.core.permissions import UsuarioAutenticado, garantir_escopo
+from app.modules.setores import repository
 from app.modules.setores.models import Ramal, Setor
 from app.modules.setores.schemas import RamalAtualizar, RamalCriar, SetorAtualizar, SetorCriar
 
 NOME_DUPLICADO = {"campo": "nome", "mensagem": "Já existe um setor com esse nome"}
+SETOR_VINCULADO = "Setor possui registros vinculados e não pode ser removido"
+RAMAL_DUPLICADO = {"campo": "numero", "mensagem": "Esse ramal já está cadastrado no setor"}
 
 
 # Setores
 
 
 def listar_setores(sessao: Session) -> list[Setor]:
-    consulta = select(Setor).options(selectinload(Setor.ramais)).order_by(Setor.nome)
-    return list(sessao.scalars(consulta))
+    return repository.listar_setores(sessao)
 
 
 def buscar_setor(sessao: Session, setor_id: uuid.UUID) -> Setor:
-    setor = sessao.get(Setor, setor_id)
+    setor = repository.buscar_setor_por_id(sessao, setor_id)
     if setor is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Setor não encontrado")
     return setor
@@ -29,24 +32,24 @@ def buscar_setor(sessao: Session, setor_id: uuid.UUID) -> Setor:
 
 def criar_setor(sessao: Session, dados: SetorCriar) -> Setor:
     setor = Setor(nome=dados.nome)
-    sessao.add(setor)
-    _salvar(sessao, conflito=NOME_DUPLICADO)
-    sessao.refresh(setor)
+    with _conflito_vira_409(sessao, NOME_DUPLICADO):
+        repository.adicionar(sessao, setor)
     return setor
 
 
 def atualizar_setor(sessao: Session, setor_id: uuid.UUID, dados: SetorAtualizar) -> Setor:
     setor = buscar_setor(sessao, setor_id)
     setor.nome = dados.nome
-    _salvar(sessao, conflito=NOME_DUPLICADO)
+    with _conflito_vira_409(sessao, NOME_DUPLICADO):
+        repository.salvar(sessao)
     return setor
 
 
 def deletar_setor(sessao: Session, setor_id: uuid.UUID) -> None:
     setor = buscar_setor(sessao, setor_id)
-    # Ramais caem junto (cascade); outros vínculos (usuários, documentos...) bloqueiam.
-    sessao.delete(setor)
-    _salvar(sessao, conflito="Setor possui registros vinculados e não pode ser removido")
+    # Ramais caem junto (ON DELETE CASCADE); outros vínculos (usuários, documentos...) bloqueiam.
+    with _conflito_vira_409(sessao, SETOR_VINCULADO):
+        repository.remover(sessao, setor)
 
 
 # Ramais
@@ -62,8 +65,8 @@ def criar_ramal(
     setor = buscar_setor(sessao, setor_id)
     garantir_escopo(usuario, setor.id)
     ramal = Ramal(numero=dados.numero, setor_id=setor.id)
-    sessao.add(ramal)
-    sessao.commit()
+    with _conflito_vira_409(sessao, RAMAL_DUPLICADO):
+        repository.adicionar(sessao, ramal)
     return ramal
 
 
@@ -73,27 +76,28 @@ def atualizar_ramal(
     ramal = _buscar_ramal(sessao, ramal_id)
     garantir_escopo(usuario, ramal.setor_id)
     ramal.numero = dados.numero
-    sessao.commit()
+    with _conflito_vira_409(sessao, RAMAL_DUPLICADO):
+        repository.salvar(sessao)
     return ramal
 
 
 def deletar_ramal(sessao: Session, ramal_id: uuid.UUID, usuario: UsuarioAutenticado) -> None:
     ramal = _buscar_ramal(sessao, ramal_id)
     garantir_escopo(usuario, ramal.setor_id)
-    sessao.delete(ramal)
-    sessao.commit()
+    repository.remover(sessao, ramal)
 
 
 def _buscar_ramal(sessao: Session, ramal_id: uuid.UUID) -> Ramal:
-    ramal = sessao.get(Ramal, ramal_id)
+    ramal = repository.buscar_ramal_por_id(sessao, ramal_id)
     if ramal is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Ramal não encontrado")
     return ramal
 
 
-def _salvar(sessao: Session, conflito: str | dict[str, str]) -> None:
+@contextmanager
+def _conflito_vira_409(sessao: Session, detalhe: str | dict[str, str]) -> Iterator[None]:
     try:
-        sessao.commit()
+        yield
     except IntegrityError:
         sessao.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, conflito)
+        raise HTTPException(status.HTTP_409_CONFLICT, detalhe)
