@@ -1,7 +1,7 @@
 """cria documentos
 
 Revision ID: e5a7c9d2f4b6
-Revises: c3d8e5f1a2b7
+Revises: d4e7a1b9c2f3
 Create Date: 2026-09-24 00:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'e5a7c9d2f4b6'
-down_revision: Union[str, Sequence[str], None] = 'c3d8e5f1a2b7'
+down_revision: Union[str, Sequence[str], None] = 'd4e7a1b9c2f3'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
