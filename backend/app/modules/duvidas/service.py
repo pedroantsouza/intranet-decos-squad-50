@@ -1,72 +1,61 @@
-from datetime import datetime, timezone
-from uuid import UUID
+import uuid
+from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.modules.duvidas.models import Duvida
+from app.core.permissions import UsuarioAutenticado, garantir_escopo, resolver_setor
+from app.modules.duvidas import repository
+from app.modules.duvidas.models import Faq
+from app.modules.duvidas.schemas import FaqAtualizar, FaqCriar
+from app.modules.setores.service import buscar_setor
 
 
-def enviar_duvida(db: Session, pergunta: str) -> Duvida:
-    """Persiste uma nova dúvida. O remetente não é rastreado por design."""
-    duvida = Duvida(pergunta=pergunta)
-    db.add(duvida)
-    db.commit()
-    db.refresh(duvida)
-    return duvida
+def listar_faq(sessao: Session) -> list[Faq]:
+    return repository.listar(sessao)
 
 
-def listar_faq(db: Session) -> list[Duvida]:
-    """Retorna todas as dúvidas que já possuem resposta, ordenadas da mais recente."""
-    return (
-        db.query(Duvida)
-        .filter(Duvida.resposta.isnot(None))
-        .order_by(Duvida.respondido_em.desc())
-        .all()
+def buscar_faq(sessao: Session, faq_id: uuid.UUID) -> Faq:
+    faq = repository.buscar_por_id(sessao, faq_id)
+    if faq is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pergunta não encontrada")
+    return faq
+
+
+def criar_faq(sessao: Session, dados: FaqCriar, usuario: UsuarioAutenticado) -> Faq:
+    setor_id = resolver_setor(dados.setor_id, usuario, entidade="pergunta")
+    buscar_setor(sessao, setor_id)
+    faq = Faq(
+        pergunta=dados.pergunta,
+        resposta=dados.resposta,
+        autor_id=usuario.id,
+        setor_id=setor_id,
     )
+    try:
+        repository.adicionar(sessao, faq)
+    except IntegrityError:
+        sessao.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, "Autor da pergunta não encontrado")
+    return buscar_faq(sessao, faq.id)
 
 
-def listar_pendentes(db: Session) -> list[Duvida]:
-    """Retorna dúvidas ainda sem resposta, ordenadas da mais antiga (FIFO)."""
-    return (
-        db.query(Duvida)
-        .filter(Duvida.resposta.is_(None))
-        .order_by(Duvida.criado_em.asc())
-        .all()
-    )
+def atualizar_faq(
+    sessao: Session, faq_id: uuid.UUID, dados: FaqAtualizar, usuario: UsuarioAutenticado
+) -> Faq:
+    faq = buscar_faq(sessao, faq_id)
+    garantir_escopo(usuario, faq.setor_id)
+    campos = dados.model_dump(exclude_unset=True)
+    if not campos:
+        return faq
+    for campo, valor in campos.items():
+        setattr(faq, campo, valor)
+    faq.atualizado_em = datetime.now(UTC)
+    repository.salvar(sessao)
+    return buscar_faq(sessao, faq.id)
 
 
-def responder_duvida(
-    db: Session,
-    id: UUID,
-    resposta: str,
-    admin_id: UUID,
-) -> Duvida:
-    """
-    Cadastra (ou atualiza) a resposta de uma dúvida.
-    A partir deste momento a dúvida passa a aparecer na FAQ pública.
-    """
-    duvida = db.query(Duvida).filter(Duvida.id == id).first()
-    if not duvida:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Duvida nao encontrada",
-        )
-    duvida.resposta = resposta
-    duvida.respondido_por_id = admin_id
-    duvida.respondido_em = datetime.now(timezone.utc)
-    db.commit()
-    db.refresh(duvida)
-    return duvida
-
-
-def deletar_duvida(db: Session, id: UUID) -> None:
-    """Remove uma dúvida independentemente de ter resposta ou não."""
-    duvida = db.query(Duvida).filter(Duvida.id == id).first()
-    if not duvida:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Duvida nao encontrada",
-        )
-    db.delete(duvida)
-    db.commit()
+def deletar_faq(sessao: Session, faq_id: uuid.UUID, usuario: UsuarioAutenticado) -> None:
+    faq = buscar_faq(sessao, faq_id)
+    garantir_escopo(usuario, faq.setor_id)
+    repository.remover(sessao, faq)

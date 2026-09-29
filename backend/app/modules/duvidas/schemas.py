@@ -1,53 +1,40 @@
+import uuid
 from datetime import datetime
-from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class DuvidaEnvio(BaseModel):
-    """Payload enviado pelo usuário ao abrir uma dúvida."""
+class FaqCriar(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
 
-    pergunta: str
+    pergunta: str = Field(min_length=1, max_length=500)
+    resposta: str = Field(min_length=1)
+    setor_id: uuid.UUID | None = None
 
-    @field_validator("pergunta")
+
+class FaqAtualizar(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    pergunta: str | None = Field(default=None, min_length=1, max_length=500)
+    resposta: str | None = Field(default=None, min_length=1)
+
+    @field_validator("pergunta", "resposta")
     @classmethod
-    def pergunta_nao_vazia(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("A pergunta nao pode ser vazia")
-        return v
+    def rejeitar_nulo(cls, valor):
+        if valor is None:
+            raise ValueError("Não pode ser nulo")
+        return valor
 
 
-class RespostaInput(BaseModel):
-    """Payload enviado pelo admin ao cadastrar a resposta."""
+class FaqResposta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-    resposta: str
-
-    @field_validator("resposta")
-    @classmethod
-    def resposta_nao_vazia(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("A resposta nao pode ser vazia")
-        return v
-
-
-class DuvidaPublica(BaseModel):
-    """Representação de uma dúvida respondida — exibida na FAQ pública."""
-
-    id: UUID
+    id: uuid.UUID
     pergunta: str
     resposta: str
-    respondido_em: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class DuvidaPendente(BaseModel):
-    """Representação de uma dúvida ainda sem resposta — visível apenas para admins."""
-
-    id: UUID
-    pergunta: str
+    setor_id: uuid.UUID
+    setor_nome: str
+    autor_id: uuid.UUID
+    autor_nome: str
     criado_em: datetime
-
-    model_config = {"from_attributes": True}
+    atualizado_em: datetime | None
