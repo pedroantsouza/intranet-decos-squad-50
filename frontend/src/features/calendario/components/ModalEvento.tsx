@@ -5,6 +5,7 @@ import Campo from '../../../shared/components/Campo'
 import Input from '../../../shared/components/Input'
 import Modal from '../../../shared/components/Modal'
 import Select from '../../../shared/components/Select'
+import Textarea from '../../../shared/components/Textarea'
 import type { Setor } from '../../../shared/types'
 import { combinarDataHora, separarDataHora } from '../formatadores'
 import { useSalvarEvento } from '../hooks/useSalvarEvento'
@@ -15,7 +16,7 @@ interface ValoresFormularioEvento {
   data: string
   inicio: string
   fim: string
-  local: string
+  descricao: string
   setorId: string
 }
 
@@ -34,7 +35,7 @@ function valoresIniciais(evento: Evento | null, usuario: Usuario | null, setores
     data: inicio?.data ?? '',
     inicio: inicio?.hora ?? '',
     fim: fim?.hora ?? '',
-    local: evento?.descricao ?? '',
+    descricao: evento?.descricao ?? '',
     setorId: evento?.setorId ?? usuario?.setorId ?? setores[0]?.id ?? '',
   }
 }
@@ -60,7 +61,7 @@ function ModalEvento({ aoFechar, eventoEditando, setores, usuario }: Propriedade
   function aoSubmeter(valores: ValoresFormularioEvento) {
     const base = {
       titulo: valores.titulo.trim(),
-      descricao: valores.local.trim() || null,
+      descricao: valores.descricao.trim() || null,
       dataInicio: combinarDataHora(valores.data, valores.inicio),
       dataFim: valores.fim ? combinarDataHora(valores.data, valores.fim) : null,
     }
@@ -98,20 +99,23 @@ function ModalEvento({ aoFechar, eventoEditando, setores, usuario }: Propriedade
           </Campo>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Campo rotulo="Local">
-            <Input placeholder="Ex.: Auditório · 3º andar" {...register('local')} />
-          </Campo>
-          <Campo rotulo="Setor">
-            <Select {...register('setorId')} disabled={setorTravado}>
-              {setores.map((setor) => (
-                <option key={setor.id} value={setor.id}>
-                  {setor.nome}
-                </option>
-              ))}
-            </Select>
-          </Campo>
-        </div>
+        <Campo rotulo="Setor">
+          <Select {...register('setorId')} disabled={setorTravado}>
+            {setores.map((setor) => (
+              <option key={setor.id} value={setor.id}>
+                {setor.nome}
+              </option>
+            ))}
+          </Select>
+        </Campo>
+
+        <Campo rotulo="Descrição">
+          <Textarea
+            className="h-[110px]"
+            placeholder="Detalhes do evento, local, público-alvo…"
+            {...register('descricao')}
+          />
+        </Campo>
 
         <div className="mt-2 flex justify-end gap-2.5 border-t border-slate-100 pt-[18px]">
           <Botao variante="secundario" onClick={aoFechar}>
