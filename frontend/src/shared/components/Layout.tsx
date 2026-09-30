@@ -8,6 +8,7 @@ import {
   IconeArquivos,
   IconeCalendario,
   IconeDuvida,
+  IconeHistorico,
   IconeMegafone,
   IconeSair,
   IconeSetaExterna,
@@ -27,9 +28,10 @@ const NAV_PRINCIPAL = [
   { rota: '/setores', label: 'Setores e ramais', Icone: IconeTelefone },
 ]
 
-// "Registro de atividades" (/logs) fica de fora até features/logs existir
-// no frontend (a rota está desativada em App.tsx pelo mesmo motivo).
-const NAV_ADMIN = [{ rota: '/usuarios', label: 'Usuários', Icone: IconeUsuarios }]
+const NAV_ADMIN = [
+  { rota: '/usuarios', label: 'Usuários', Icone: IconeUsuarios },
+  { rota: '/logs', label: 'Registro de Atividades', Icone: IconeHistorico },
+]
 
 const ATALHOS = [
   { label: 'Prontuário eletrônico', url: '#' },
@@ -57,14 +59,16 @@ function Layout({ children }: PropriedadesLayout) {
   }
 
   const itemClasse = (ativo: boolean) =>
-    `flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-[13.5px] transition-colors ${
+    `flex items-center gap-2.5 rounded-[10px] py-2.5 text-[13.5px] transition-colors ${
+      recolhido ? 'justify-center px-0' : 'px-3'
+    } ${
       ativo ? 'bg-[#800020] font-semibold text-white' : 'font-medium text-slate-600 hover:bg-slate-100 hover:text-[#800020]'
     }`
 
   return (
-    <div className="flex h-screen gap-0 overflow-hidden bg-slate-100 p-4">
+    <div className="flex min-h-screen items-start bg-slate-100 p-4">
       <aside
-        className="flex flex-none flex-col overflow-hidden rounded-l-[10px] rounded-r bg-white py-6 transition-[width] duration-200"
+        className="sticky top-4 flex h-[calc(100vh-2rem)] flex-none flex-col overflow-hidden rounded-l-[10px] rounded-r bg-white py-6 transition-[width] duration-200"
         style={{ width: recolhido ? '82px' : '262px', padding: recolhido ? '24px 12px' : '24px 18px' }}
       >
         <div className="flex flex-none flex-col items-center gap-2 px-3 pb-5">
@@ -115,7 +119,7 @@ function Layout({ children }: PropriedadesLayout) {
                 target="_blank"
                 rel="noopener noreferrer"
                 title={link.label}
-                className="flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-[13px] font-medium text-slate-600 no-underline hover:bg-slate-100 hover:text-[#800020]"
+                className={`flex items-center gap-2.5 rounded-[10px] py-2.5 text-[13px] ${recolhido ? 'justify-center px-0' : 'px-3'} font-medium text-slate-600 no-underline hover:bg-slate-100 hover:text-[#800020]`}
               >
                 <IconeSetaExterna tamanho={15} className="flex-none text-slate-400" />
                 {!recolhido && <span className="flex-1 truncate">{link.label}</span>}
@@ -128,13 +132,13 @@ function Layout({ children }: PropriedadesLayout) {
           type="button"
           onClick={() => setRecolhido((r) => !r)}
           title={recolhido ? 'Expandir menu' : 'Recolher menu'}
-          className="mt-3 flex flex-none items-center gap-2.5 rounded-lg px-3 py-2 text-[11.5px] text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          className={`mt-3 flex flex-none items-center gap-2.5 rounded-lg py-2 ${recolhido ? 'justify-center px-0' : 'px-3'} text-[11.5px] text-slate-400 hover:bg-slate-100 hover:text-slate-600`}
         >
           {recolhido ? <IconeSidebarExpandir tamanho={15} /> : <IconeSidebarRecolher tamanho={15} />}
           {!recolhido && <span className="flex-1">Recolher menu</span>}
         </button>
 
-        <div className="mt-2 flex flex-none items-center gap-2.5 border-t border-slate-100 pt-4">
+        <div className={`mt-2 flex flex-none items-center gap-2.5 border-t ${recolhido ? 'justify-center' : ''} border-slate-100 pt-4`}>
           <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-slate-300 text-white">
             <IconeUsuario tamanho={18} />
           </span>
@@ -161,8 +165,8 @@ function Layout({ children }: PropriedadesLayout) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 rounded-r-[4px] bg-slate-50">
-        <div className="h-full overflow-auto px-7 py-6">
+      <main className="min-h-[calc(100vh-2rem)] min-w-0 flex-1 self-stretch rounded-r-[4px] bg-slate-50">
+        <div className="px-7 py-6">
           {children}
         </div>
       </main>
