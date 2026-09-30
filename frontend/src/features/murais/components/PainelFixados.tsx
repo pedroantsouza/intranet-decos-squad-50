@@ -7,8 +7,6 @@ interface PropriedadesPainelFixados {
 }
 
 function PainelFixados({ fixados, aoAbrir }: PropriedadesPainelFixados) {
-  if (fixados.length === 0) return null
-
   return (
     <div className="flex w-[316px] flex-none flex-col overflow-hidden rounded-[10px] bg-white shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
       <div className="flex items-center justify-between bg-[#800020] px-[18px] py-3">
@@ -18,6 +16,9 @@ function PainelFixados({ fixados, aoAbrir }: PropriedadesPainelFixados) {
         </span>
       </div>
       <div className="flex flex-col px-[18px] pb-[18px]">
+        {fixados.length === 0 && (
+          <p className="m-0 pt-[18px] text-center text-[12.5px] text-slate-500">Nenhum aviso fixado no momento.</p>
+        )}
         {fixados.map((aviso) => (
           <button
             key={aviso.id}

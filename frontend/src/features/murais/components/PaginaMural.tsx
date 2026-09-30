@@ -97,11 +97,7 @@ function PaginaMural() {
         aoNovoAviso={abrirNovoAviso}
       />
 
-      <div
-        className={`grid items-start gap-[22px] ${
-          fixados.length > 0 ? 'grid-cols-[minmax(0,1fr)_316px]' : 'grid-cols-1'
-        }`}
-      >
+      <div className="grid grid-cols-[minmax(0,1fr)_316px] items-start gap-[22px]">
         <ListaAvisos
           avisos={avisosFiltrados}
           podeGerenciarAviso={podeGerenciarEsteAviso}

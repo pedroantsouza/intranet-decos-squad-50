@@ -39,27 +39,25 @@ function ListaAvisos({ avisos, podeGerenciarAviso, aoAbrir, aoEditar, aoExcluir 
   const itens = agruparPorDia(avisos)
 
   return (
-    <div className="overflow-x-hidden overflow-y-auto pr-2" style={{ maxHeight: 'calc(100vh - 260px)' }}>
-      <div className="flex flex-col gap-[26px]">
-        {itens.map(({ aviso, diaTexto, corPonto }) => (
-          <CartaoAviso
-            key={aviso.id}
-            aviso={aviso}
-            diaTexto={diaTexto}
-            corPonto={corPonto}
-            podeGerenciar={podeGerenciarAviso(aviso)}
-            aoAbrir={() => aoAbrir(aviso)}
-            aoEditar={(e) => {
-              e.stopPropagation()
-              aoEditar(aviso)
-            }}
-            aoExcluir={(e) => {
-              e.stopPropagation()
-              aoExcluir(aviso)
-            }}
-          />
-        ))}
-      </div>
+    <div className="flex min-w-0 flex-col gap-[26px]">
+      {itens.map(({ aviso, diaTexto, corPonto }) => (
+        <CartaoAviso
+          key={aviso.id}
+          aviso={aviso}
+          diaTexto={diaTexto}
+          corPonto={corPonto}
+          podeGerenciar={podeGerenciarAviso(aviso)}
+          aoAbrir={() => aoAbrir(aviso)}
+          aoEditar={(e) => {
+            e.stopPropagation()
+            aoEditar(aviso)
+          }}
+          aoExcluir={(e) => {
+            e.stopPropagation()
+            aoExcluir(aviso)
+          }}
+        />
+      ))}
     </div>
   )
 }
