@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import PaginaCalendario from './features/calendario/components/PaginaCalendario'
 import PaginaDocumentos from './features/documentos/components/PaginaDocumentos'
 import PaginaDuvidas from './features/duvidas/components/PaginaDuvidas'
-//import PaginaLogs from './features/logs/components/PaginaLogs'
+import PaginaLogs from './features/logs/components/PaginaLogs'
 import PaginaMural from './features/murais/components/PaginaMural'
 import PaginaSetores from './features/setores/components/PaginaSetores'
 import PaginaUsuarios from './features/usuarios/components/PaginaUsuarios'
@@ -76,8 +76,7 @@ function App() {
           </RotaProtegida>
         }
       />
-      {/* Rota desativada: features/logs ainda não existe */}
-      {/* <Route
+      <Route
         path="/logs"
         element={
           <RotaProtegida papeisPermitidos={['superadmin']}>
@@ -86,7 +85,7 @@ function App() {
             </Layout>
           </RotaProtegida>
         }
-      /> */}
+      />
     </Routes>
   )
 }
