@@ -160,6 +160,21 @@ export const IconeUsuario = criarIcone(
   </>,
 )
 
+export const IconeEnviar = criarIcone(
+  <path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4M12 15V4M7.5 8.5 12 4l4.5 4.5" />,
+)
+
+export const IconeBaixar = criarIcone(
+  <path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4M12 4v11M7.5 10.5 12 15l4.5-4.5" />,
+)
+
+export const IconeNuvemEnviar = criarIcone(
+  <>
+    <path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.75 4.75 0 0 1-.5 9.5" />
+    <path d="M12 19v-7M9 14.5l3-3 3 3" />
+  </>,
+)
+
 export const IconeImagem = criarIcone(
   <>
     <rect x="3" y="4" width="18" height="16" rx="2" />
