@@ -1,6 +1,10 @@
+import { motion } from 'motion/react'
 import { formatarDiaMes } from '../formatadores'
 import CartaoAviso from './CartaoAviso'
 import type { Aviso } from '../types'
+
+const ATRASO_POR_ITEM_S = 0.05
+const ATRASO_MAXIMO_S = 0.5
 
 interface PropriedadesListaAvisos {
   avisos: Aviso[]
@@ -40,23 +44,29 @@ function ListaAvisos({ avisos, podeGerenciarAviso, aoAbrir, aoEditar, aoExcluir 
 
   return (
     <div className="flex min-w-0 flex-col gap-[26px]">
-      {itens.map(({ aviso, diaTexto, corPonto }) => (
-        <CartaoAviso
+      {itens.map(({ aviso, diaTexto, corPonto }, indice) => (
+        <motion.div
           key={aviso.id}
-          aviso={aviso}
-          diaTexto={diaTexto}
-          corPonto={corPonto}
-          podeGerenciar={podeGerenciarAviso(aviso)}
-          aoAbrir={() => aoAbrir(aviso)}
-          aoEditar={(e) => {
-            e.stopPropagation()
-            aoEditar(aviso)
-          }}
-          aoExcluir={(e) => {
-            e.stopPropagation()
-            aoExcluir(aviso)
-          }}
-        />
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: Math.min(indice * ATRASO_POR_ITEM_S, ATRASO_MAXIMO_S) }}
+        >
+          <CartaoAviso
+            aviso={aviso}
+            diaTexto={diaTexto}
+            corPonto={corPonto}
+            podeGerenciar={podeGerenciarAviso(aviso)}
+            aoAbrir={() => aoAbrir(aviso)}
+            aoEditar={(e) => {
+              e.stopPropagation()
+              aoEditar(aviso)
+            }}
+            aoExcluir={(e) => {
+              e.stopPropagation()
+              aoExcluir(aviso)
+            }}
+          />
+        </motion.div>
       ))}
     </div>
   )

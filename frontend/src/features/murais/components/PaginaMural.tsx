@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { podeEditar, podeGerenciarConteudo } from '../../../lib/permissions'
+import { useAniversariantes } from '../hooks/useAniversariantes'
 import { useAvisos } from '../hooks/useAvisos'
 import { useExcluirAviso } from '../hooks/useExcluirAviso'
+import { useProximosEventos } from '../hooks/useProximosEventos'
 import { useSetoresMural } from '../hooks/useSetoresMural'
 import type { Aviso, CategoriaAviso } from '../types'
 import BarraFiltrosMural from './BarraFiltrosMural'
@@ -10,13 +12,21 @@ import CarrosselDestaques from './CarrosselDestaques'
 import ListaAvisos from './ListaAvisos'
 import ModalAviso from './ModalAviso'
 import ModalDetalheAviso from './ModalDetalheAviso'
+import PainelAniversariantes from './PainelAniversariantes'
 import PainelFixados from './PainelFixados'
+import PainelProximosEventos from './PainelProximosEventos'
+
+const LIMITE_PROXIMOS_EVENTOS = 5
 
 function PaginaMural() {
   const { usuario } = useAuth()
   const { data: avisos = [], isLoading, isError } = useAvisos()
   const { data: setores = [] } = useSetoresMural()
   const excluirAviso = useExcluirAviso()
+
+  const hoje = useMemo(() => new Date(), [])
+  const { data: eventosFuturos = [] } = useProximosEventos(hoje.toISOString().slice(0, 10))
+  const { data: aniversariantes = [] } = useAniversariantes(hoje.getMonth() + 1)
 
   const [busca, setBusca] = useState('')
   const [categoria, setCategoria] = useState<CategoriaAviso | ''>('')
@@ -40,9 +50,17 @@ function PaginaMural() {
     })
   }, [avisos, categoria, setorId, busca])
 
-  // Destaques e fixados ignoram os filtros da barra de busca 
+  // Destaques e fixados ignoram os filtros da barra de busca
   const destaques = useMemo(() => avisos.slice(0, 5), [avisos])
   const fixados = useMemo(() => avisos.filter((a) => a.fixado), [avisos])
+
+  const proximosEventos = useMemo(() => {
+    const agora = new Date()
+    return eventosFuturos
+      .filter((evento) => new Date(evento.dataInicio) >= agora)
+      .sort((a, b) => a.dataInicio.localeCompare(b.dataInicio))
+      .slice(0, LIMITE_PROXIMOS_EVENTOS)
+  }, [eventosFuturos])
 
   function podeGerenciarEsteAviso(aviso: Aviso) {
     return usuario ? podeEditar(usuario, aviso) : false
@@ -80,6 +98,11 @@ function PaginaMural() {
   return (
     <div>
       <CarrosselDestaques destaques={destaques} aoAbrir={setDetalhe} />
+
+      <div className="mb-[22px] grid grid-cols-2 items-start gap-[22px]">
+        <PainelAniversariantes mes={hoje.getMonth() + 1} aniversariantes={aniversariantes} />
+        <PainelProximosEventos eventos={proximosEventos} />
+      </div>
 
       <div className="mb-[22px]">
         <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">Mural de avisos</h1>
