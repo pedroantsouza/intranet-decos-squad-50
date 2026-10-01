@@ -20,7 +20,7 @@ O `.env` fica na **raiz** do repositório (é o que o `docker-compose.yml` lê) 
 | `MINIO_ROOT_PASSWORD` | Senha do administrador do MinIO (mínimo 8 caracteres). |
 | `JWT_SECRET` | Segredo de assinatura dos tokens. Gere com `python -c "import secrets; print(secrets.token_urlsafe(64))"`. |
 
-As demais (`POSTGRES_DB`, `POSTGRES_USER`, `MINIO_ROOT_USER`, `ACCESS_TOKEN_MINUTOS`, `REFRESH_TOKEN_DIAS`, `PORTA_*`) têm valor padrão. A `DATABASE_URL` do backend é montada pelo compose a partir das variáveis do Postgres; o `backend/.env` só vale para rodar o backend fora do Docker.
+As demais (`POSTGRES_DB`, `POSTGRES_USER`, `MINIO_ROOT_USER`, `MINIO_BUCKET`, `ACCESS_TOKEN_MINUTOS`, `REFRESH_TOKEN_DIAS`, `PORTA_*`) têm valor padrão. A `DATABASE_URL` do backend é montada pelo compose a partir das variáveis do Postgres; o mesmo vale para as credenciais do MinIO (`MINIO_*`). O `backend/.env` só vale para rodar o backend fora do Docker.
 
 ### 2. Subir os containers
 

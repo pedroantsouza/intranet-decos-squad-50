@@ -39,6 +39,6 @@ Item do calendário (ex: reunião, treinamento), distinto de aniversariante (que
 
 ## Regra de escopo de edição
 
-Vale pra Aviso, Evento e FAQ: o registro guarda o setor de quem criou. `admin_setor` só edita/exclui o que foi criado por alguém do próprio setor; `superadmin` edita/exclui qualquer um. A **visibilidade** de leitura desses três é sempre institucional (todo mundo vê tudo) — o escopo por setor vale só pra edição, não pra leitura.
+Vale pra Aviso, Evento, FAQ e Documento: o registro guarda o setor de quem criou. `admin_setor` só edita/exclui o que foi criado por alguém do próprio setor; `superadmin` edita/exclui qualquer um. A **visibilidade** de leitura desses quatro é sempre institucional (todo mundo vê tudo) — o escopo por setor vale só pra edição, não pra leitura.
 
-Nota: pra Documento, o escopo de leitura (se `comum` vê documentos de todos os setores ou só do próprio) ainda não foi discutido — só o escopo de edição (`admin_setor` gerencia o do próprio setor) está resolvido.
+Documento segue a mesma regra: todo usuário autenticado lista e baixa documentos de qualquer setor; criar, editar, substituir o arquivo e excluir seguem o escopo por setor.
