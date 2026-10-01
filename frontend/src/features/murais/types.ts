@@ -62,3 +62,28 @@ export interface NovoAviso {
 
 /** Só o texto; capa e anexos mudam por rotas próprias (ver hooks/useSalvarAviso.ts). */
 export type EdicaoAviso = Partial<Omit<NovoAviso, 'imagem' | 'anexos'>>
+
+/**
+ * Leitura de backend/app/modules/calendario (só o que o mural exibe, sem editar/excluir
+ * — isso continua exclusivo de features/calendario).
+ */
+export interface Evento {
+  id: string
+  titulo: string
+  descricao: string | null
+  dataInicio: string
+  dataFim: string | null
+  setorId: string
+  setorNome: string
+  autorId: string
+  autorNome: string
+  criadoEm: string
+}
+
+export interface Aniversariante {
+  id: string
+  nome: string
+  dia: number
+  setorId: string | null
+  setorNome: string | null
+}

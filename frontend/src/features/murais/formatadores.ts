@@ -2,6 +2,11 @@ const MESES_ABREV = [
   'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ',
 ]
 
+export const NOMES_MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+
 /** "2026-08-28T08:40:00" -> "28 AGO" */
 export function formatarDiaMes(iso: string): string {
   const data = new Date(iso)

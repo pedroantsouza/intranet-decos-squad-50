@@ -1,6 +1,6 @@
 import { api } from '../../lib/api'
 import { formatarTamanhoArquivo } from './formatadores'
-import type { Aviso, CategoriaAviso, EdicaoAviso, NovoAviso, Setor } from './types'
+import type { Aniversariante, Aviso, CategoriaAviso, EdicaoAviso, Evento, NovoAviso, Setor } from './types'
 
 interface AnexoApi {
   id: string
@@ -141,4 +141,58 @@ export async function baixarAnexoAviso(id: string, anexoId: string, nome: string
 export async function listarSetores(): Promise<Setor[]> {
   const { data } = await api.get<SetorApi[]>('/setores')
   return data.map((setor) => ({ id: setor.id, nome: setor.nome }))
+}
+
+interface EventoApi {
+  id: string
+  titulo: string
+  descricao: string | null
+  data_inicio: string
+  data_fim: string | null
+  setor_id: string
+  setor_nome: string
+  autor_id: string
+  autor_nome: string
+  criado_em: string
+}
+
+interface AniversarianteApi {
+  id: string
+  nome: string
+  dia: number
+  setor_id: string | null
+  setor_nome: string | null
+}
+
+function paraEvento(bruto: EventoApi): Evento {
+  return {
+    id: bruto.id,
+    titulo: bruto.titulo,
+    descricao: bruto.descricao,
+    dataInicio: bruto.data_inicio,
+    dataFim: bruto.data_fim,
+    setorId: bruto.setor_id,
+    setorNome: bruto.setor_nome,
+    autorId: bruto.autor_id,
+    autorNome: bruto.autor_nome,
+    criadoEm: bruto.criado_em,
+  }
+}
+
+export async function listarProximosEventos(de: string): Promise<Evento[]> {
+  const { data } = await api.get<EventoApi[]>('/calendario/eventos', { params: { de } })
+  return data.map(paraEvento)
+}
+
+export async function listarAniversariantesDoMes(mes: number): Promise<Aniversariante[]> {
+  const { data } = await api.get<AniversarianteApi[]>('/calendario/aniversariantes', {
+    params: { mes },
+  })
+  return data.map((bruto) => ({
+    id: bruto.id,
+    nome: bruto.nome,
+    dia: bruto.dia,
+    setorId: bruto.setor_id,
+    setorNome: bruto.setor_nome,
+  }))
 }
