@@ -167,3 +167,5 @@ export const IconeImagem = criarIcone(
     <path d="m5 18 5-5 3 3 3.5-3.5L21 16" />
   </>,
 )
+
+export const IconeDownload = criarIcone(<path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14" />)

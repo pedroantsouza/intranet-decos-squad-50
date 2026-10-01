@@ -3,11 +3,13 @@ import uuid
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.modules.murais.models import Aviso
+from app.modules.murais.models import AnexoAviso, Aviso
 
 
 def _consulta_base() -> Select[tuple[Aviso]]:
-  return select(Aviso).options(selectinload(Aviso.autor), selectinload(Aviso.setor))
+  return select(Aviso).options(
+    selectinload(Aviso.autor), selectinload(Aviso.setor), selectinload(Aviso.anexos)
+  )
 
 
 def listar(sessao: Session) -> list[Aviso]:
@@ -17,6 +19,13 @@ def listar(sessao: Session) -> list[Aviso]:
 
 def buscar_por_id(sessao: Session, aviso_id: uuid.UUID) -> Aviso | None:
   return sessao.scalars(_consulta_base().where(Aviso.id == aviso_id)).first()
+
+
+def buscar_anexo(
+  sessao: Session, aviso_id: uuid.UUID, anexo_id: uuid.UUID
+) -> AnexoAviso | None:
+  consulta = select(AnexoAviso).where(AnexoAviso.id == anexo_id, AnexoAviso.aviso_id == aviso_id)
+  return sessao.scalars(consulta).first()
 
 
 def adicionar(sessao: Session, aviso: Aviso) -> None:

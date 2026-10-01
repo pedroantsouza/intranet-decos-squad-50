@@ -1,12 +1,11 @@
-import unicodedata
 import uuid
 from typing import Annotated
-from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.core.arquivos import content_disposition
 from app.core.database import obter_sessao
 from app.core.permissions import UsuarioAutenticado, requer_admin, usuario_atual
 from app.modules.documentos import service
@@ -18,13 +17,6 @@ from app.modules.documentos.schemas import (
 )
 
 router = APIRouter(prefix="/documentos", tags=["documentos"])
-
-
-def _content_disposition(disposicao: str, nome_arquivo: str) -> str:
-  # `filename` ASCII para clientes antigos; `filename*` (RFC 5987) preserva acentos.
-  ascii_ = unicodedata.normalize("NFKD", nome_arquivo).encode("ascii", "ignore").decode()
-  ascii_ = ascii_.replace('"', "").replace("\\", "") or "documento"
-  return f"{disposicao}; filename=\"{ascii_}\"; filename*=UTF-8''{quote(nome_arquivo)}"
 
 
 @router.get("", response_model=list[DocumentoResposta], dependencies=[Depends(usuario_atual)])
@@ -50,8 +42,8 @@ def baixar_documento(
     blocos,
     media_type=documento.tipo_conteudo,
     headers={
-      "Content-Disposition": _content_disposition(
-        "inline" if inline else "attachment", documento.nome_arquivo
+      "Content-Disposition": content_disposition(
+        "inline" if inline else "attachment", documento.nome_arquivo, "documento"
       ),
       "Content-Length": str(documento.tamanho_bytes),
       "X-Content-Type-Options": "nosniff",
