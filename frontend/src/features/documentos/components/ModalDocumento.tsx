@@ -8,13 +8,19 @@ import Select from '../../../shared/components/Select'
 import { IconeNuvemEnviar } from '../../../shared/components/icones'
 import { formatarTamanho } from '../formatadores'
 import { useSalvarDocumento } from '../hooks/useSalvarDocumento'
-import type { Documento, Setor } from '../types'
+import { ROTULOS_CATEGORIA, type CategoriaDocumento, type Documento, type Setor } from '../types'
 
-const TAMANHO_MAXIMO_BYTES = 20 * 1024 * 1024
-const EXTENSOES_ACEITAS = ['pdf', 'doc', 'docx', 'xls', 'xlsx']
+// Espelha TIPOS_DOCUMENTO e tamanho_maximo_upload_mb do backend; a validação
+// real é lá, aqui é só pra avisar antes de subir o arquivo.
+const TAMANHO_MAXIMO_MB = 50
+const EXTENSOES_ACEITAS = [
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp', 'txt', 'png', 'jpg', 'jpeg',
+]
 
 interface ValoresFormularioDocumento {
   titulo: string
+  descricao: string
+  categoria: CategoriaDocumento
   setorId: string
 }
 
@@ -22,18 +28,20 @@ interface PropriedadesModalDocumento {
   aoFechar: () => void
   documentoEditando: Documento | null
   setores: Setor[]
+  /** superadmin escolhe o setor; admin_setor publica sempre no próprio. */
+  escolheSetor: boolean
 }
 
 function validarArquivo(arquivo: File): string | null {
   const extensao = arquivo.name.split('.').pop()?.toLowerCase() ?? ''
-  if (!EXTENSOES_ACEITAS.includes(extensao)) return 'Formato não aceito. Envie PDF, DOC ou XLS.'
-  if (arquivo.size > TAMANHO_MAXIMO_BYTES) return 'Arquivo maior que 20 MB.'
+  if (!EXTENSOES_ACEITAS.includes(extensao)) return 'Formato não aceito.'
+  if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) return `Arquivo maior que ${TAMANHO_MAXIMO_MB} MB.`
   return null
 }
 
 // Remontado do zero a cada abertura (key trocada pelo pai), como em
 // features/murais/components/ModalAviso.tsx.
-function ModalDocumento({ aoFechar, documentoEditando, setores }: PropriedadesModalDocumento) {
+function ModalDocumento({ aoFechar, documentoEditando, setores, escolheSetor }: PropriedadesModalDocumento) {
   const editando = !!documentoEditando
   const salvarDocumento = useSalvarDocumento()
   const entradaArquivo = useRef<HTMLInputElement>(null)
@@ -49,6 +57,8 @@ function ModalDocumento({ aoFechar, documentoEditando, setores }: PropriedadesMo
   } = useForm<ValoresFormularioDocumento>({
     defaultValues: {
       titulo: documentoEditando?.titulo ?? '',
+      descricao: documentoEditando?.descricao ?? '',
+      categoria: documentoEditando?.categoria ?? 'outro',
       setorId: documentoEditando?.setorId ?? setores[0]?.id ?? '',
     },
   })
@@ -71,11 +81,24 @@ function ModalDocumento({ aoFechar, documentoEditando, setores }: PropriedadesMo
 
   function aoSubmeter(valores: ValoresFormularioDocumento) {
     const titulo = valores.titulo.trim()
+    const descricao = valores.descricao.trim()
+    const { categoria } = valores
     if (documentoEditando) {
-      salvarDocumento.mutate({ id: documentoEditando.id, dados: { titulo }, arquivo }, { onSuccess: aoFechar })
+      salvarDocumento.mutate(
+        { id: documentoEditando.id, dados: { titulo, descricao: descricao || null, categoria }, arquivo },
+        { onSuccess: aoFechar },
+      )
     } else if (arquivo) {
       salvarDocumento.mutate(
-        { dados: { titulo, descricao: '', setorId: valores.setorId, arquivo } },
+        {
+          dados: {
+            titulo,
+            descricao: descricao || undefined,
+            categoria,
+            setorId: escolheSetor ? valores.setorId : undefined,
+            arquivo,
+          },
+        },
         { onSuccess: aoFechar },
       )
     }
@@ -101,7 +124,7 @@ function ModalDocumento({ aoFechar, documentoEditando, setores }: PropriedadesMo
           }}
           onDragLeave={() => setArrastando(false)}
           onDrop={aoSoltar}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed px-6 py-10 text-center transition-colors ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed px-4 py-8 text-center sm:px-6 sm:py-10 transition-colors ${
             arrastando ? 'border-[#800020] bg-[#800020]/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'
           }`}
         >
@@ -112,13 +135,13 @@ function ModalDocumento({ aoFechar, documentoEditando, setores }: PropriedadesMo
           <span className="text-[13px] text-slate-500">
             {textoArquivo
               ? 'Clique ou arraste outro arquivo para substituir'
-              : 'PDF, DOC ou XLS até 20 MB · ou clique para selecionar do computador'}
+              : `PDF, Office, texto ou imagem até ${TAMANHO_MAXIMO_MB} MB · ou clique para selecionar do computador`}
           </span>
           {erroArquivo && <span className="text-xs text-red-600">{erroArquivo}</span>}
           <input
             ref={entradaArquivo}
             type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            accept={EXTENSOES_ACEITAS.map((e) => `.${e}`).join(',')}
             className="hidden"
             onChange={(e) => selecionarArquivo(e.target.files?.[0])}
           />
@@ -131,17 +154,33 @@ function ModalDocumento({ aoFechar, documentoEditando, setores }: PropriedadesMo
           />
         </Campo>
 
-        {!editando && (
-          <Campo rotulo="Categoria" className="w-1/2">
-            <Select {...register('setorId')}>
-              {setores.map((setor) => (
-                <option key={setor.id} value={setor.id}>
-                  {setor.nome}
+        <Campo rotulo="Descrição">
+          <Input placeholder="Opcional" {...register('descricao')} />
+        </Campo>
+
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <Campo rotulo="Categoria" className="w-full sm:w-1/2">
+            <Select {...register('categoria')}>
+              {Object.entries(ROTULOS_CATEGORIA).map(([valor, rotulo]) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
                 </option>
               ))}
             </Select>
           </Campo>
-        )}
+
+          {!editando && escolheSetor && (
+            <Campo rotulo="Setor" className="w-full sm:w-1/2">
+              <Select {...register('setorId')}>
+                {setores.map((setor) => (
+                  <option key={setor.id} value={setor.id}>
+                    {setor.nome}
+                  </option>
+                ))}
+              </Select>
+            </Campo>
+          )}
+        </div>
 
         <div className="mt-2 flex justify-end gap-2.5 border-t border-slate-100 pt-[18px]">
           <Botao variante="secundario" onClick={aoFechar}>

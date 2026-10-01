@@ -6,11 +6,12 @@ import Dropdown from '../../../shared/components/Dropdown'
 import { IconeEnviar, IconeFunil, IconeLupa } from '../../../shared/components/icones'
 import { useBaixarDocumento } from '../hooks/useBaixarDocumento'
 import { useDocumentos } from '../hooks/useDocumentos'
-import { useExcluirDocumento } from '../hooks/useExcluirDocumento'
 import { useSetoresDocumentos } from '../hooks/useSetoresDocumentos'
-import type { Documento } from '../types'
+import { ROTULOS_CATEGORIA, type CategoriaDocumento, type Documento } from '../types'
 import LinhaDocumento, { COLUNAS_TABELA } from './LinhaDocumento'
 import ModalDocumento from './ModalDocumento'
+import ModalExcluirDocumento from './ModalExcluirDocumento'
+import ModalPreviaDocumento from './ModalPreviaDocumento'
 
 // Busca sem diferenciar maiúsculas nem acentos ("higienizacao" acha "Higienização").
 function normalizar(texto: string): string {
@@ -21,14 +22,18 @@ function PaginaDocumentos() {
   const { usuario } = useAuth()
   const [busca, setBusca] = useState('')
   const [setorId, setSetorId] = useState('')
+  const [categoria, setCategoria] = useState<CategoriaDocumento | ''>('')
 
-  const { data: documentos = [], isLoading, isError } = useDocumentos({ setorId })
+  // Setor e categoria filtram no backend; a busca por texto fica local pra
+  // ignorar acentos e não disparar requisição a cada tecla.
+  const { data: documentos = [], isLoading, isError } = useDocumentos({ setorId, categoria })
   const { data: setores = [] } = useSetoresDocumentos()
-  const excluirDocumento = useExcluirDocumento()
   const baixarDocumento = useBaixarDocumento()
 
   const [modalAberto, setModalAberto] = useState(false)
   const [documentoEditando, setDocumentoEditando] = useState<Documento | null>(null)
+  const [documentoExcluindo, setDocumentoExcluindo] = useState<Documento | null>(null)
+  const [documentoPrevia, setDocumentoPrevia] = useState<Documento | null>(null)
 
   const podeCriar = podeGerenciarConteudo(usuario)
   // admin_setor só publica no próprio setor; superadmin em qualquer um.
@@ -37,8 +42,9 @@ function PaginaDocumentos() {
 
   const opcoesCategoria = [
     { valor: '', rotulo: 'Todas as categorias' },
-    ...setores.map((s) => ({ valor: s.id, rotulo: s.nome })),
+    ...Object.entries(ROTULOS_CATEGORIA).map(([valor, rotulo]) => ({ valor, rotulo })),
   ]
+  const opcoesSetor = [{ valor: '', rotulo: 'Todos os setores' }, ...setores.map((s) => ({ valor: s.id, rotulo: s.nome }))]
 
   // Título ou palavra-chave: cada palavra digitada precisa aparecer no
   // título, na descrição, no nome do arquivo ou na categoria.
@@ -47,7 +53,7 @@ function PaginaDocumentos() {
     if (palavras.length === 0) return documentos
     return documentos.filter((documento) => {
       const texto = normalizar(
-        `${documento.titulo} ${documento.descricao ?? ''} ${documento.nomeArquivo} ${documento.setorNome}`,
+        `${documento.titulo} ${documento.descricao ?? ''} ${documento.nomeArquivo} ${documento.setorNome} ${ROTULOS_CATEGORIA[documento.categoria]}`,
       )
       return palavras.every((palavra) => texto.includes(palavra))
     })
@@ -72,18 +78,12 @@ function PaginaDocumentos() {
     setDocumentoEditando(null)
   }
 
-  function aoExcluir(documento: Documento) {
-    if (window.confirm(`Excluir o documento "${documento.titulo}"? Essa ação não pode ser desfeita.`)) {
-      excluirDocumento.mutate(documento.id)
-    }
-  }
-
   return (
     <div>
-      <h1 className="m-0 mb-[22px] text-[31px] font-bold tracking-tight text-slate-900">POPs &amp; documentos</h1>
+      <h1 className="m-0 mb-[22px] text-[24px] sm:text-[31px] font-bold tracking-tight text-slate-900">POPs &amp; documentos</h1>
 
-      <div className="mb-5 flex items-stretch gap-3.5">
-        <label className="relative block flex-[0_1_320px]">
+      <div className="mb-5 flex flex-wrap items-stretch gap-3.5">
+        <label className="relative block w-full sm:w-auto sm:flex-[0_1_320px]">
           <IconeLupa
             tamanho={16}
             className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400"
@@ -100,12 +100,20 @@ function PaginaDocumentos() {
           rotuloPadrao="Categoria"
           icone={<IconeFunil tamanho={15} />}
           opcoes={opcoesCategoria}
+          valor={categoria}
+          aoMudar={(valor) => setCategoria(valor as CategoriaDocumento | '')}
+        />
+
+        <Dropdown
+          rotuloPadrao="Setor"
+          icone={<IconeFunil tamanho={15} />}
+          opcoes={opcoesSetor}
           valor={setorId}
           aoMudar={setSetorId}
         />
 
         {podeCriar && (
-          <Botao variante="primario" onClick={abrirNovo} className="ml-auto flex flex-none items-center gap-2 whitespace-nowrap">
+          <Botao variante="primario" onClick={abrirNovo} className="flex w-full flex-none items-center justify-center gap-2 whitespace-nowrap sm:ml-auto sm:w-auto">
             <IconeEnviar tamanho={15} />
             Enviar documento
           </Botao>
@@ -114,7 +122,7 @@ function PaginaDocumentos() {
 
       <div className="overflow-hidden rounded-[10px] bg-white shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
         <div
-          className={`${COLUNAS_TABELA} bg-[#800020] px-[18px] py-3 text-[10.5px] font-semibold tracking-wide text-white`}
+          className={`hidden ${COLUNAS_TABELA} bg-[#800020] px-[18px] py-3 text-[10.5px] font-semibold tracking-wide text-white`}
         >
           <span>DOCUMENTO</span>
           <span>CATEGORIA</span>
@@ -130,7 +138,7 @@ function PaginaDocumentos() {
           </p>
         ) : documentosFiltrados.length === 0 ? (
           <p className="m-0 px-[18px] py-4 text-sm text-slate-500">
-            {busca.trim() || setorId
+            {busca.trim() || setorId || categoria
               ? 'Nenhum documento encontrado com esses filtros.'
               : 'Nenhum documento publicado ainda.'}
           </p>
@@ -141,10 +149,10 @@ function PaginaDocumentos() {
                 key={documento.id}
                 documento={documento}
                 podeGerenciar={podeGerenciarEste(documento)}
-                aoVisualizar={() => baixarDocumento.mutate({ documento, visualizar: true })}
+                aoVisualizar={() => setDocumentoPrevia(documento)}
                 aoBaixar={() => baixarDocumento.mutate({ documento })}
                 aoEditar={() => abrirEdicao(documento)}
-                aoExcluir={() => aoExcluir(documento)}
+                aoExcluir={() => setDocumentoExcluindo(documento)}
               />
             ))}
           </ul>
@@ -157,6 +165,23 @@ function PaginaDocumentos() {
           aoFechar={fecharModal}
           documentoEditando={documentoEditando}
           setores={setoresPermitidos}
+          escolheSetor={usuario?.role === 'superadmin'}
+        />
+      )}
+
+      {documentoPrevia && (
+        <ModalPreviaDocumento
+          key={documentoPrevia.id}
+          documento={documentoPrevia}
+          aoFechar={() => setDocumentoPrevia(null)}
+        />
+      )}
+
+      {documentoExcluindo && (
+        <ModalExcluirDocumento
+          key={documentoExcluindo.id}
+          documento={documentoExcluindo}
+          aoFechar={() => setDocumentoExcluindo(null)}
         />
       )}
     </div>
