@@ -184,3 +184,17 @@ export const IconeImagem = criarIcone(
 )
 
 export const IconeDownload = criarIcone(<path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14" />)
+
+export const IconeOlho = criarIcone(
+  <>
+    <path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </>,
+)
+
+export const IconeAlerta = criarIcone(
+  <>
+    <path d="M10.3 4.2 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z" />
+    <path d="M12 9.5v4M12 17h.01" />
+  </>,
+)
