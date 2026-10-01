@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { Usuario } from './tipos'
 
-const CHAVE_TOKEN = 'intranet:token'
+const CHAVE_ACCESS_TOKEN = 'intranet:token'
+const CHAVE_REFRESH_TOKEN = 'intranet:refresh_token'
 
 function decodificarUsuario(token: string): Usuario {
   const payload = token.split('.')[1]
@@ -11,11 +12,20 @@ function decodificarUsuario(token: string): Usuario {
 }
 
 export function obterToken() {
-  return localStorage.getItem(CHAVE_TOKEN)
+  return localStorage.getItem(CHAVE_ACCESS_TOKEN)
 }
 
-export function limparToken() {
-  localStorage.removeItem(CHAVE_TOKEN)
+export function obterRefreshToken() {
+  return localStorage.getItem(CHAVE_REFRESH_TOKEN)
+}
+
+export function salvarAccessToken(token: string) {
+  localStorage.setItem(CHAVE_ACCESS_TOKEN, token)
+}
+
+export function limparTokens() {
+  localStorage.removeItem(CHAVE_ACCESS_TOKEN)
+  localStorage.removeItem(CHAVE_REFRESH_TOKEN)
 }
 
 export function useAuth() {
@@ -24,13 +34,14 @@ export function useAuth() {
     return token ? decodificarUsuario(token) : null
   })
 
-  function entrar(token: string) {
-    localStorage.setItem(CHAVE_TOKEN, token)
-    setUsuario(decodificarUsuario(token))
+  function entrar(accessToken: string, refreshToken: string) {
+    salvarAccessToken(accessToken)
+    localStorage.setItem(CHAVE_REFRESH_TOKEN, refreshToken)
+    setUsuario(decodificarUsuario(accessToken))
   }
 
   function sair() {
-    limparToken()
+    limparTokens()
     setUsuario(null)
   }
 
