@@ -22,8 +22,11 @@ export function useSalvarDocumento() {
       toast.success(variaveis.id ? 'Documento atualizado com sucesso.' : 'Documento publicado com sucesso.')
     },
     onError: (erro) => {
-      if (isAxiosError<ErroCampo>(erro) && erro.response?.data?.mensagem) {
+      // O backend sempre devolve `mensagem`; `campo` só vem em erro de validação.
+      if (isAxiosError<Partial<ErroCampo>>(erro) && erro.response?.data?.mensagem) {
         toast.error(erro.response.data.mensagem)
+      } else if (isAxiosError(erro) && erro.response?.status === 413) {
+        toast.error('O arquivo enviado passa do limite de tamanho.')
       } else {
         toast.error('Erro ao salvar o documento. Tente novamente.')
       }

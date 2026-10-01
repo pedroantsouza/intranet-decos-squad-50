@@ -1,24 +1,32 @@
-/**
- * Contrato baseado no router de backend/app/modules/documentos. Os schemas
- * (DocumentoResposta, FiltroDocumentos, DocumentoCriar, DocumentoAtualizar)
- * ainda não estão no repositório — os nomes de campo em `api.ts` assumem o
- * mesmo padrão snake_case de murais e devem ser conferidos quando entrarem.
- */
+/** Contrato espelhado de backend/app/modules/documentos/schemas.py. */
 export interface Setor {
   id: string
   nome: string
+}
+
+/** Mesmos valores de `CategoriaDocumento` no backend. */
+export type CategoriaDocumento = 'pop' | 'protocolo' | 'manual' | 'formulario' | 'outro'
+
+export const ROTULOS_CATEGORIA: Record<CategoriaDocumento, string> = {
+  pop: 'POP',
+  protocolo: 'Protocolo',
+  manual: 'Manual',
+  formulario: 'Formulário',
+  outro: 'Outro',
 }
 
 export interface Documento {
   id: string
   titulo: string
   descricao: string | null
+  categoria: CategoriaDocumento
   setorId: string
   setorNome: string
   nomeArquivo: string
   tipoConteudo: string
   tamanhoBytes: number
-  autorNome: string | null
+  autorId: string
+  autorNome: string
   criadoEm: string
   atualizadoEm: string | null
 }
@@ -26,18 +34,23 @@ export interface Documento {
 export interface FiltroDocumentos {
   busca?: string
   setorId?: string
+  categoria?: CategoriaDocumento | ''
 }
 
 export interface NovoDocumento {
   titulo: string
-  descricao: string
-  setorId: string
+  descricao?: string
+  categoria: CategoriaDocumento
+  /** Opcional: o backend usa o setor do próprio usuário quando não vem. */
+  setorId?: string
   arquivo: File
 }
 
 export interface EdicaoDocumento {
   titulo?: string
-  descricao?: string
+  /** `null` limpa a descrição. */
+  descricao?: string | null
+  categoria?: CategoriaDocumento
 }
 
 /** Contrato de erro de validação de campo vindo do backend, conforme
