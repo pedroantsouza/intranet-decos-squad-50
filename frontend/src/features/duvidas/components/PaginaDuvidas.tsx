@@ -8,7 +8,6 @@ import { useFaq } from '../hooks/useFaq'
 import { useSetoresDuvidas } from '../hooks/useSetoresDuvidas'
 import type { Faq } from '../types'
 import ModalFaq from './ModalFaq'
-import PainelEnviarDuvida from './PainelEnviarDuvida'
 import PainelFaq from './PainelFaq'
 
 // Tokens de marca (docs/.claude/rules/design-system.md) declarados aqui, e
@@ -88,19 +87,16 @@ function PaginaDuvidas() {
         )}
       </div>
 
-      <div className="flex items-start gap-[22px]">
-        <PainelFaq
-          busca={busca}
-          aoMudarBusca={setBusca}
-          itens={faqFiltrada}
-          expandidoId={expandidoId}
-          aoAlternar={alternarExpandido}
-          podeGerenciar={podeGerenciarEstaFaq}
-          aoEditar={abrirEdicao}
-          aoExcluir={aoExcluir}
-        />
-        <PainelEnviarDuvida />
-      </div>
+      <PainelFaq
+        busca={busca}
+        aoMudarBusca={setBusca}
+        itens={faqFiltrada}
+        expandidoId={expandidoId}
+        aoAlternar={alternarExpandido}
+        podeGerenciar={podeGerenciarEstaFaq}
+        aoEditar={abrirEdicao}
+        aoExcluir={aoExcluir}
+      />
 
       {modalAberto && (
         <ModalFaq key={faqEditando?.id ?? 'novo'} aoFechar={fecharModal} faqEditando={faqEditando} setores={setores} />

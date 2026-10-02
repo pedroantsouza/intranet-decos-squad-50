@@ -22,9 +22,9 @@ function PaginaLogin() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: (dados: FormularioLogin) =>
-      api.post<{ access_token: string }>('/auth/login', dados),
+      api.post<{ access_token: string; refresh_token: string }>('/auth/login', dados),
     onSuccess: (resposta) => {
-      entrar(resposta.data.access_token)
+      entrar(resposta.data.access_token, resposta.data.refresh_token)
       navegar('/mural')
     },
     onError: () => toast.error('E-mail ou senha inválidos.'),

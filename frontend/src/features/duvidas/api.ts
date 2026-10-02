@@ -140,13 +140,3 @@ export async function excluirFaq(id: string): Promise<void> {
   faqMock = faqMock.filter((f) => f.id !== id)
   return atraso(undefined)
 }
-
-// Fluxo separado da FAQ: qualquer colaborador autenticado pode enviar uma
-// pergunta livre (painel "Não encontrou?"). Não vira item de FAQ
-// automaticamente — isso depende da decisão de modelo ainda em aberto.
-const duvidasEnviadasMock: string[] = []
-
-export async function enviarDuvida(pergunta: string): Promise<void> {
-  duvidasEnviadasMock.push(pergunta)
-  return atraso(undefined)
-}

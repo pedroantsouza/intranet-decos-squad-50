@@ -66,9 +66,9 @@ function Layout({ children }: PropriedadesLayout) {
     }`
 
   return (
-    <div className="flex min-h-screen items-start bg-slate-100 p-4">
+    <div className="flex min-h-screen items-start bg-slate-100">
       <aside
-        className="sticky top-4 flex h-[calc(100vh-2rem)] flex-none flex-col overflow-hidden rounded-l-[10px] rounded-r bg-white py-6 transition-[width] duration-200"
+        className="sticky top-0 flex h-screen flex-none flex-col overflow-hidden rounded-r bg-white py-6 transition-[width] duration-200"
         style={{ width: recolhido ? '82px' : '262px', padding: recolhido ? '24px 12px' : '24px 18px' }}
       >
         <div className="flex flex-none flex-col items-center gap-2 px-3 pb-5">
@@ -165,7 +165,7 @@ function Layout({ children }: PropriedadesLayout) {
         </div>
       </aside>
 
-      <main className="min-h-[calc(100vh-2rem)] min-w-0 flex-1 self-stretch rounded-r-[4px] bg-slate-50">
+      <main className="min-h-screen min-w-0 flex-1 self-stretch bg-slate-50">
         <div className="px-7 py-6">
           {children}
         </div>
