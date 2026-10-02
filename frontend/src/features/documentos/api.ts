@@ -1,16 +1,26 @@
 import { api } from '../../lib/api'
-import type { Documento, EdicaoDocumento, FiltroDocumentos, NovoDocumento, Setor } from './types'
+import type {
+  CategoriaDocumento,
+  Documento,
+  EdicaoDocumento,
+  FiltroDocumentos,
+  NovoDocumento,
+  Setor,
+} from './types'
 
+// Espelho de DocumentoResposta (backend/app/modules/documentos/schemas.py).
 interface DocumentoApi {
   id: string
   titulo: string
   descricao: string | null
-  setor_id: string
-  setor_nome: string
+  categoria: CategoriaDocumento
   nome_arquivo: string
   tipo_conteudo: string
   tamanho_bytes: number
-  autor_nome?: string | null
+  setor_id: string
+  setor_nome: string
+  autor_id: string
+  autor_nome: string
   criado_em: string
   atualizado_em: string | null
 }
@@ -25,12 +35,14 @@ function paraDocumento(bruto: DocumentoApi): Documento {
     id: bruto.id,
     titulo: bruto.titulo,
     descricao: bruto.descricao,
+    categoria: bruto.categoria,
     setorId: bruto.setor_id,
     setorNome: bruto.setor_nome,
     nomeArquivo: bruto.nome_arquivo,
     tipoConteudo: bruto.tipo_conteudo,
     tamanhoBytes: bruto.tamanho_bytes,
-    autorNome: bruto.autor_nome ?? null,
+    autorId: bruto.autor_id,
+    autorNome: bruto.autor_nome,
     criadoEm: bruto.criado_em,
     atualizadoEm: bruto.atualizado_em,
   }
@@ -41,6 +53,7 @@ export async function listarDocumentos(filtro: FiltroDocumentos = {}): Promise<D
     params: {
       ...(filtro.busca ? { busca: filtro.busca } : {}),
       ...(filtro.setorId ? { setor_id: filtro.setorId } : {}),
+      ...(filtro.categoria ? { categoria: filtro.categoria } : {}),
     },
   })
   return data.map(paraDocumento)
@@ -56,7 +69,8 @@ export async function criarDocumento(dados: NovoDocumento): Promise<Documento> {
   const corpo = new FormData()
   corpo.append('titulo', dados.titulo)
   if (dados.descricao) corpo.append('descricao', dados.descricao)
-  corpo.append('setor_id', dados.setorId)
+  corpo.append('categoria', dados.categoria)
+  if (dados.setorId) corpo.append('setor_id', dados.setorId)
   corpo.append('arquivo', dados.arquivo)
   const { data } = await api.post<DocumentoApi>('/documentos', corpo)
   return paraDocumento(data)
