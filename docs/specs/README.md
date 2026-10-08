@@ -82,7 +82,9 @@ Toda mudança de comportamento segue o ciclo abaixo, **um critério de aceite po
 **Bug:** antes de corrigir, registre o comportamento esperado no spec (status `🐞`) e escreva o
 teste que reproduz o bug. O teste vermelho é a prova de que o bug existe; o verde, de que acabou.
 Se a correção não entra no mesmo PR, o teste vai marcado com
-`@pytest.mark.xfail(reason="CAL-02 🐞: ...")` e o status Teste fica `🔴`. Como o `xfail` é
+`@pytest.mark.xfail(reason="CAL-02 🐞: ...", raises=AssertionError)` e o status Teste fica `🔴`.
+O `raises=` e a preparação fora de `assert` (helpers usam `pytest.fail`) garantem que só a
+asserção do bug conta como falha esperada; erro na preparação aparece como falha. Como o `xfail` é
 estrito (`pytest.ini`), quando a correção chegar o teste passa a falhar até a marca ser removida —
 ninguém esquece de atualizar.
 
@@ -115,14 +117,18 @@ pytest tests/murais                         # um módulo
 - **Banco:** Postgres real, num banco separado — o do `DATABASE_URL` com sufixo `_teste`
   (ex: `intranet_teste`), ou o que vier em `DATABASE_URL_TESTE`. Ele é **apagado e recriado** a
   cada execução e migrado com `alembic upgrade head`, então as migrations também são testadas.
-  O conftest recusa rodar se o nome não terminar em `_teste`.
+  O conftest recusa rodar se o nome não terminar em `_teste`, e só deriva o banco de um
+  `DATABASE_URL` local (`localhost` ou `banco`); outro host só via `DATABASE_URL_TESTE`. Duas
+  execuções simultâneas no mesmo banco: a segunda para com erro em vez de derrubar a primeira.
 - **Isolamento:** cada teste roda numa transação desfeita no fim; os `commit()` dos services viram
-  savepoints. Consequência: `now()` dá o mesmo instante para tudo que um teste insere.
+  savepoints. Consequência: `now()` dá o mesmo instante para tudo que um teste insere. Cada
+  requisição usa uma sessão nova (mesmas opções da `SessaoLocal`), como em produção.
 - **MinIO:** sempre substituído por `ArmazenamentoFalso` (dicionário em memória, fixture
-  `armazenamento_falso`). `armazenamento_falso.objetos` mostra o que foi gravado e
+  `armazenamento_falso`); código que chegar ao cliente MinIO real quebra o teste.
+  `armazenamento_falso.objetos` mostra o que foi gravado (`conteudo` e `tipo_conteudo`) e
   `armazenamento_falso.indisponivel = True` simula o MinIO fora do ar (503).
-- **Cenário pronto:** fixtures `cliente`, `sessao`, `setor` ("Enfermagem") e um usuário de cada
-  papel nele (`comum`, `admin_setor`, `superadmin`). Outros setores/usuários com
+- **Cenário pronto:** fixtures `cliente`, `sessao`, `setor` ("Enfermagem"), `comum` e
+  `admin_setor` nesse setor, e `superadmin` sem setor (como o real). Outros setores/usuários com
   `fabrica.setor(...)` e `fabrica.usuario(Papel.X, setor)`. Token: `headers=autenticar(usuario)`.
 
 ```

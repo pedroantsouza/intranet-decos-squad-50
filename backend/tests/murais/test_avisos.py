@@ -15,7 +15,8 @@ def test_mur03_admin_publica_aviso_com_capa(
     resposta = cliente.post(
         "/murais/avisos",
         data={"titulo": "Nova escala", "conteudo": "Vale a partir de segunda.", "categoria": "comunicado"},
-        files={"imagem": ("capa.png", PNG, "image/png")},
+        # O tipo informado pelo cliente é ignorado: o backend grava o que corresponde à extensão.
+        files={"imagem": ("capa.png", PNG, "application/octet-stream")},
         headers=autenticar(admin_setor),
     )
 
@@ -24,20 +25,24 @@ def test_mur03_admin_publica_aviso_com_capa(
     assert aviso["possui_imagem"] is True
     assert aviso["setor_id"] == str(admin_setor.setor_id)
     assert aviso["autor_nome"] == admin_setor.nome
-    assert len(armazenamento_falso.objetos) == 1
+    [objeto] = armazenamento_falso.objetos.values()
+    assert objeto.conteudo == PNG
+    assert objeto.tipo_conteudo == "image/png"
 
 
 def test_mur03_aviso_aparece_para_outros_colaboradores(
     cliente: TestClient, admin_setor: Usuario, comum: Usuario
 ):
-    cliente.post(
+    criacao = cliente.post(
         "/murais/avisos",
         data={"titulo": "Nova escala", "conteudo": "Vale a partir de segunda."},
         headers=autenticar(admin_setor),
     )
+    assert criacao.status_code == 201, criacao.json()
 
     resposta = cliente.get("/murais/avisos", headers=autenticar(comum))
 
+    assert resposta.status_code == 200
     assert [aviso["titulo"] for aviso in resposta.json()] == ["Nova escala"]
 
 

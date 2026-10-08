@@ -5,6 +5,7 @@ Só é importado depois do conftest.py, que prepara o ambiente antes de qualquer
 
 import uuid
 from collections.abc import Iterator
+from dataclasses import dataclass
 from datetime import date
 from functools import cache
 from typing import BinaryIO
@@ -47,7 +48,7 @@ class Fabrica:
 
     def usuario(
         self,
-        role: Papel = Papel.comum,
+        papel: Papel = Papel.comum,
         setor: Setor | None = None,
         *,
         nome: str | None = None,
@@ -60,7 +61,7 @@ class Fabrica:
             nome=nome or f"Usuário {sufixo}",
             email=email or f"usuario-{sufixo}@teste.local",
             senha_hash=_hash_senha_padrao(),
-            role=role,
+            role=papel,
             setor_id=setor.id if setor else None,
             data_nascimento=data_nascimento,
             ativo=ativo,
@@ -70,11 +71,17 @@ class Fabrica:
         return usuario
 
 
+@dataclass
+class ObjetoArmazenado:
+    conteudo: bytes
+    tipo_conteudo: str
+
+
 class ArmazenamentoFalso:
     """Substitui as funções de app/core/armazenamento.py por um dicionário em memória."""
 
     def __init__(self) -> None:
-        self.objetos: dict[str, bytes] = {}
+        self.objetos: dict[str, ObjetoArmazenado] = {}
         # True simula o MinIO fora do ar: as operações levantam ErroArmazenamento (503).
         self.indisponivel = False
 
@@ -84,13 +91,13 @@ class ArmazenamentoFalso:
 
     def enviar_arquivo(self, chave: str, conteudo: BinaryIO, tamanho: int, tipo_conteudo: str) -> None:
         self._checar()
-        self.objetos[chave] = conteudo.read(tamanho)
+        self.objetos[chave] = ObjetoArmazenado(conteudo.read(tamanho), tipo_conteudo)
 
     def ler_arquivo(self, chave: str) -> Iterator[bytes]:
         self._checar()
         if chave not in self.objetos:
             raise armazenamento.ArquivoNaoEncontrado(chave)
-        return iter([self.objetos[chave]])
+        return iter([self.objetos[chave].conteudo])
 
     def mover_arquivo(self, origem: str, destino: str) -> None:
         self._checar()
