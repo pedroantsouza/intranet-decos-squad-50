@@ -10,8 +10,8 @@ aceite verificáveis. Os critérios de aceite viram testes.
 | [`autenticacao.md`](./autenticacao.md) | `AUT` | Login, refresh, sessão no frontend |
 | [`usuarios.md`](./usuarios.md) | `USU` | Cadastro e desativação de colaboradores |
 | [`setores.md`](./setores.md) | `SET` | Setores, ramais e guia de contatos |
-| [`murais.md`](./murais.md) | `MUR` | Mural de avisos, capa e anexos |
-| [`calendario.md`](./calendario.md) | `CAL` | Eventos e aniversariantes |
+| [`murais.md`](./murais.md) | `MUR` | Mural de avisos, eventos, capa e anexos, aniversariantes e tela de calendário |
+| [`calendario.md`](./calendario.md) | ~~`CAL`~~ | Absorvido pelo mural (IDs riscados apontando para `MUR`) |
 | [`documentos.md`](./documentos.md) | `DOC` | Repositório de POPs e documentos |
 | [`duvidas.md`](./duvidas.md) | `DUV` | Central de dúvidas (FAQ) |
 | [`logs.md`](./logs.md) | `LOG` | Registro de atividades (auditoria) |
