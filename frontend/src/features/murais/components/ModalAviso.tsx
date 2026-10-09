@@ -60,21 +60,13 @@ interface PropriedadesModalAviso {
   avisoEditando: Aviso | null
   setores: Setor[]
   usuario: Usuario | null
-  /** Categoria já escolhida ao criar (o calendário abre com `evento`). */
-  categoriaInicial?: CategoriaAviso
 }
 
 // Este componente só é montado enquanto o modal está aberto — quem
 // controla isso é o pai (PaginaMural), que também troca a `key` a cada
 // abertura para remontar o formulário do zero (evita resetar estado local
 // via setState dentro de efeito, que causa re-renders em cascata).
-function ModalAviso({
-  aoFechar,
-  avisoEditando,
-  setores,
-  usuario,
-  categoriaInicial = 'comunicado',
-}: PropriedadesModalAviso) {
+function ModalAviso({ aoFechar, avisoEditando, setores, usuario }: PropriedadesModalAviso) {
   const editando = !!avisoEditando
   // O backend não troca o setor de um aviso existente (AvisoAtualizar não tem setor_id).
   const setorTravado = usuario?.role === 'admin_setor' || editando
@@ -112,7 +104,7 @@ function ModalAviso({
     defaultValues: {
       titulo: avisoEditando?.titulo ?? '',
       conteudo: avisoEditando?.conteudo ?? '',
-      categoria: avisoEditando?.categoria ?? categoriaInicial,
+      categoria: avisoEditando?.categoria ?? 'comunicado',
       setorId: avisoEditando?.setorId ?? usuario?.setorId ?? setores[0]?.id ?? '',
       fixado: avisoEditando?.fixado ?? false,
       dataInicio: inicioAtual?.data ?? '',

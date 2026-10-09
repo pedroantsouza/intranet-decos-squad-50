@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
-import { podeEditar, podeGerenciarConteudo } from '../../../lib/permissions'
-import Botao from '../../../shared/components/Botao'
-import { IconeMais } from '../../../shared/components/icones'
+import { podeEditar } from '../../../lib/permissions'
 import {
   agruparEventosPorDia,
   deslocarPeriodo,
@@ -28,7 +26,8 @@ import VisaoSemana from './VisaoSemana'
 
 /**
  * Visão do mural que posiciona os eventos (avisos de categoria `evento`) nas suas datas
- * (MUR-15). Clicar num evento abre o mesmo detalhe de aviso do mural.
+ * (MUR-15). Clicar num evento abre o mesmo detalhe de aviso do mural. Só exibe: evento é
+ * criado no mural.
  */
 function PaginaCalendario() {
   const { usuario } = useAuth()
@@ -46,7 +45,6 @@ function PaginaCalendario() {
   const { data: setores = [] } = useSetoresMural()
   const excluirAviso = useExcluirAviso()
 
-  const podeCriar = podeGerenciarConteudo(usuario)
   const eventosPorDia = useMemo(() => agruparEventosPorDia(eventos), [eventos])
 
   function aniversariantesDoDia(data: Date): Aniversariante[] {
@@ -70,11 +68,6 @@ function PaginaCalendario() {
     setVisao('mes')
   }
 
-  function abrirNovoEvento() {
-    setAvisoEditando(null)
-    setModalAberto(true)
-  }
-
   function abrirEdicao(aviso: Aviso) {
     setDetalhe(null)
     setAvisoEditando(aviso)
@@ -95,19 +88,7 @@ function PaginaCalendario() {
   return (
     <div>
       <div className="mb-6 flex items-center gap-5">
-        <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">
-          Calendário &amp; aniversariantes
-        </h1>
-        {podeCriar && (
-          <Botao
-            variante="primario"
-            onClick={abrirNovoEvento}
-            className="ml-auto flex items-center gap-2 whitespace-nowrap"
-          >
-            <IconeMais tamanho={15} />
-            Novo evento
-          </Botao>
-        )}
+        <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">Calendário</h1>
       </div>
 
       {isLoading && <p className="mb-4 text-sm text-slate-500">Carregando eventos…</p>}
@@ -172,14 +153,14 @@ function PaginaCalendario() {
         </div>
       </div>
 
-      {modalAberto && (
+      {/* Só edição, a partir do detalhe: evento novo é criado no mural. */}
+      {modalAberto && avisoEditando && (
         <ModalAviso
-          key={avisoEditando?.id ?? 'novo'}
+          key={avisoEditando.id}
           aoFechar={fecharModal}
           avisoEditando={avisoEditando}
           setores={setores}
           usuario={usuario}
-          categoriaInicial="evento"
         />
       )}
       <ModalDetalheAviso

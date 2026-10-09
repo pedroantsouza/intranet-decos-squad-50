@@ -218,8 +218,8 @@ Substitui CAL-07.
 ### MUR-15 — Tela do calendário
 Origem: [ESP] [ENT H3] [CTX] · Back — · Front ✅ · Teste ⬜
 
-Visão do mural que posiciona os eventos nas suas datas. Rota `/calendario`, feature `murais`.
-Substitui CAL-08.
+Visão do mural que posiciona os eventos nas suas datas. Página "Calendário", rota `/calendario`,
+feature `murais`. Substitui CAL-08.
 
 - Visões de dia, semana, mês e ano, com navegação para períodos anterior/seguinte; a consulta usa
   MUR-12 com o intervalo da visão atual.
@@ -227,6 +227,5 @@ Substitui CAL-08.
 - Clicar num evento abre o **mesmo detalhe do aviso** do mural (capa, conteúdo, anexos), com
   editar/excluir para quem pode gerenciar (GER-12).
 - Painéis de próximos eventos e de aniversariantes do mês (MUR-13).
-- Criar evento só para `admin_setor`/`superadmin`: abre o formulário de aviso com a categoria
-  `evento` já escolhida (e a data clicada, se houver) — não existe mais formulário de evento
-  separado.
+- A tela só exibe: **não há botão de criar evento**. Evento é criado no mural, como qualquer aviso
+  (MUR-03, MUR-11); não existe formulário de evento separado.
