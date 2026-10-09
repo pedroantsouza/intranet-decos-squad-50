@@ -81,8 +81,8 @@ function ModalEvento({ aoFechar, eventoEditando, setores, usuario }: Propriedade
           />
         </Campo>
 
-        <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-4">
-          <Campo rotulo="Data" erro={errors.data?.message}>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1.2fr_1fr_1fr]">
+          <Campo rotulo="Data" erro={errors.data?.message} className="col-span-2 sm:col-span-1">
             <Input type="date" {...register('data', { required: 'Informe a data.' })} />
           </Campo>
           <Campo rotulo="Início">
@@ -117,7 +117,7 @@ function ModalEvento({ aoFechar, eventoEditando, setores, usuario }: Propriedade
           />
         </Campo>
 
-        <div className="mt-2 flex justify-end gap-2.5 border-t border-slate-100 pt-[18px]">
+        <div className="mt-2 grid gap-2.5 border-t border-slate-200/60 pt-[18px] sm:flex sm:justify-end">
           <Botao variante="secundario" onClick={aoFechar}>
             Cancelar
           </Botao>

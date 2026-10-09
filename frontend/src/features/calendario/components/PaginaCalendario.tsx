@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAuth } from '../../../lib/auth/useAuth'
 import { podeEditar, podeGerenciarConteudo } from '../../../lib/permissions'
 import Botao from '../../../shared/components/Botao'
-import { IconeMais } from '../../../shared/components/icones'
+import { IconeAlerta, IconeMais } from '../../../shared/components/icones'
 import {
   agruparEventosPorDia,
   chaveDeData,
@@ -98,15 +98,15 @@ function PaginaCalendario() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center gap-5">
-        <h1 className="m-0 text-[31px] font-bold tracking-tight text-slate-900">
+      <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <h1 className="m-0 text-2xl font-semibold tracking-tight text-slate-900">
           Calendário &amp; aniversariantes
         </h1>
         {podeCriar && (
           <Botao
             variante="primario"
             onClick={abrirNovoEvento}
-            className="ml-auto flex items-center gap-2 whitespace-nowrap"
+            className="w-full sm:ml-auto sm:w-auto"
           >
             <IconeMais tamanho={15} />
             Novo evento
@@ -114,18 +114,19 @@ function PaginaCalendario() {
         )}
       </div>
 
-      {isLoading && <p className="mb-4 text-sm text-slate-500">Carregando eventos…</p>}
+      {isLoading && <p className="mb-4 text-sm text-slate-600">Carregando eventos…</p>}
 
       {/* Sem o backend rodando, as chamadas à API falham e este aviso aparece;
           as visões continuam renderizando (vazias) para permitir ver o layout. */}
       {isError && (
-        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="surface mb-4 flex items-center gap-2.5 !border-l-4 !border-l-critical px-4 py-3 text-sm text-critical">
+          <IconeAlerta tamanho={18} className="flex-none" />
           Não foi possível carregar os eventos. Verifique se o backend está no ar e tente novamente.
         </p>
       )}
 
-      <div className="grid grid-cols-[minmax(0,1fr)_316px] items-start gap-[22px]">
-        <div className="rounded-[10px] bg-white p-5 shadow-[0_1px_2px_rgba(30,42,50,0.04),0_10px_22px_-16px_rgba(30,42,50,0.18)]">
+      <div className="grid grid-cols-1 items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_316px]">
+        <div className="surface min-w-0 p-4 sm:p-5">
           <CabecalhoCalendario
             titulo={tituloDoPeriodo(dataReferencia, visao)}
             visao={visao}
@@ -156,7 +157,7 @@ function PaginaCalendario() {
             />
           )}
         </div>
-        <div className="flex flex-col gap-[22px]">
+        <div className="grid grid-cols-1 items-start gap-[22px] md:grid-cols-2 lg:flex lg:flex-col lg:items-stretch">
           <PainelAniversariantes
             mes={dataReferencia.getMonth()}
             aniversariantes={aniversariantesPorMes.get(dataReferencia.getMonth() + 1) ?? []}
