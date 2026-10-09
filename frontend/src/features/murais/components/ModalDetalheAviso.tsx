@@ -37,7 +37,7 @@ function ModalDetalheAviso({ aviso, aoFechar }: PropriedadesModalDetalheAviso) {
       variante="amplo"
       cabecalho={
         <div className="flex items-center gap-3">
-          <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-slate-300 text-white">
+          <span className="flex size-[38px] flex-none items-center justify-center rounded-full bg-brand-100 text-brand-700">
             <IconeUsuario tamanho={22} />
           </span>
           <div className="flex flex-col">
@@ -47,48 +47,48 @@ function ModalDetalheAviso({ aviso, aoFechar }: PropriedadesModalDetalheAviso) {
         </div>
       }
     >
-      <div className="mb-4 h-0.5 rounded-full bg-[#800020]" />
-      <div className="mb-2.5 flex items-center gap-3">
-        <span className="text-[11px] tracking-wide text-slate-400">
+      <div className="mb-4 h-0.5 rounded-full bg-brand-600" />
+      <div className="mb-2.5 flex flex-wrap items-center gap-3">
+        <span className="text-xs tracking-wide text-slate-500 tabular-nums">
           {formatarDiaMes(aviso.criadoEm)} · {formatarHora(aviso.criadoEm)}
         </span>
         <BadgeCategoria categoria={aviso.categoria} comImagem={!!aviso.urlImagem} />
       </div>
-      <div className="flex items-start gap-6">
+      <div className="flex flex-col items-start gap-6 md:flex-row">
         {aviso.urlImagem && (
-          <div className="w-[400px] flex-none rounded-[10px] border border-slate-200 bg-slate-50 p-2">
+          <div className="w-full flex-none rounded-[10px] bg-white/55 p-2 ring-1 ring-white/80 md:w-[400px]">
             <div
-              className="h-[300px] w-full rounded-md bg-cover bg-center"
+              className="h-[220px] w-full rounded-md bg-cover bg-center sm:h-[300px]"
               style={{ backgroundImage: `url(${aviso.urlImagem})` }}
             />
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <h2 className="m-0 mb-4 text-[26px] leading-tight font-bold tracking-tight text-slate-900 text-balance">
+        <div className="w-full min-w-0 flex-1">
+          <h2 className="m-0 mb-4 text-xl leading-tight font-semibold tracking-tight text-balance text-slate-900 sm:text-[26px]">
             {aviso.titulo}
           </h2>
-          <div className="mb-4 h-px bg-slate-200" />
+          <div className="mb-4 h-px bg-slate-200/60" />
           <p className="m-0 text-[15px] leading-loose text-slate-700 text-balance whitespace-pre-line">
             {aviso.conteudo}
           </p>
           {aviso.anexos.length > 0 && (
             <div className="mt-6 flex flex-col gap-2">
-              <span className="text-[11px] tracking-wide text-slate-500">ANEXOS</span>
+              <span className="text-xs font-medium tracking-wide text-slate-700">ANEXOS</span>
               {aviso.anexos.map((anexo) => (
                 <div
                   key={anexo.id}
-                  className="flex items-center gap-2.5 rounded-lg bg-slate-100 px-3 py-2.5"
+                  className="flex items-center gap-2.5 rounded-[10px] bg-white/55 px-3 py-1.5 ring-1 ring-white/80"
                 >
-                  <IconeArquivoTexto tamanho={16} className="text-[#800020]" />
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-slate-800">
+                  <IconeArquivoTexto tamanho={16} className="flex-none text-brand-600" />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-800">
                     {anexo.nome}
                   </span>
-                  <span className="text-[11px] text-slate-500">{anexo.tamanho}</span>
+                  <span className="text-xs text-slate-600 tabular-nums">{anexo.tamanho}</span>
                   <button
                     type="button"
                     onClick={() => baixar(anexo.id, anexo.nome)}
                     title="Baixar"
-                    className="flex text-slate-400 hover:text-[#800020]"
+                    className="flex size-10 flex-none items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/60 hover:text-brand-600 sm:size-8"
                   >
                     <IconeDownload tamanho={16} />
                   </button>
@@ -98,8 +98,8 @@ function ModalDetalheAviso({ aviso, aoFechar }: PropriedadesModalDetalheAviso) {
           )}
         </div>
       </div>
-      <div className="mt-auto flex items-center gap-3 border-t border-slate-100 pt-6">
-        <Botao variante="secundario" onClick={aoFechar} className="ml-auto">
+      <div className="mt-auto grid gap-3 border-t border-slate-200/60 pt-6 sm:flex sm:items-center">
+        <Botao variante="secundario" onClick={aoFechar} className="sm:ml-auto">
           Fechar
         </Botao>
       </div>

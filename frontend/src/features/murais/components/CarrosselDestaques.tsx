@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { IconeCaretLeft, IconeCaretRight } from '../../../shared/components/icones'
-import logoDecos from '../../../shared/assets/logo-decos.png'
+import simboloDecos from '../../../shared/assets/simbolo.png'
 import { formatarDiaMes, formatarHora } from '../formatadores'
 import BadgeCategoria from './BadgeCategoria'
 import type { Aviso } from '../types'
@@ -29,19 +29,16 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
   }, [total])
 
   return (
-    <div className="relative mb-6 h-[400px] overflow-hidden rounded-[10px] bg-slate-800">
+    <div className="relative mb-6 h-[280px] overflow-hidden rounded-card bg-slate-800 sm:h-[400px]">
       {vazio && (
         <div className="absolute inset-0">
-          <div
-            className="absolute inset-0 bg-slate-700 bg-cover bg-center"
-            style={{ background: 'linear-gradient(135deg,#1e293b,#3b000e)' }}
-          />
+          <div className="bg-bordeaux-gradient absolute inset-0" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <img src={logoDecos} alt="Hospital Decós" className="h-20 w-auto object-contain opacity-40" />
+            <img src={simboloDecos} alt="" className="h-40 w-auto opacity-[0.08] brightness-0 invert" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/5" />
-          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-8">
-            <h2 className="m-0 max-w-xl text-[26px] font-bold leading-tight tracking-tight text-white text-balance">
+          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-5 pb-16 sm:p-8">
+            <h2 className="m-0 max-w-xl text-xl leading-tight font-semibold tracking-tight text-balance text-white sm:text-[26px]">
               Nenhum aviso
             </h2>
           </div>
@@ -61,41 +58,33 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
             className="absolute inset-0 block text-left"
           >
             <div
-              className="absolute inset-0 bg-slate-700 bg-cover bg-center"
-              style={
-                avisoAtual.urlImagem
-                  ? { backgroundImage: `url(${avisoAtual.urlImagem})` }
-                  : { background: 'linear-gradient(135deg,#1e293b,#3b000e)' }
-              }
+              className={`absolute inset-0 bg-cover bg-center ${avisoAtual.urlImagem ? 'bg-slate-700' : 'bg-bordeaux-gradient'}`}
+              style={avisoAtual.urlImagem ? { backgroundImage: `url(${avisoAtual.urlImagem})` } : undefined}
             />
             {!avisoAtual.urlImagem && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <img src={logoDecos} alt="Hospital Decós" className="h-20 w-auto object-contain opacity-40" />
+                <img src={simboloDecos} alt="" className="h-40 w-auto opacity-[0.08] brightness-0 invert" />
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-slate-900/5" />
-            <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-8">
+            <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2.5 p-5 pb-16 sm:p-8">
               <div className="flex items-center gap-3 text-[10.5px] tracking-wide text-white/80">
-                <BadgeCategoria
-                  categoria={avisoAtual.categoria}
-                  comImagem={!!avisoAtual.urlImagem}
-                  className="bg-white/15"
-                />
+                <BadgeCategoria categoria={avisoAtual.categoria} sobreFoto />
                 <span>
                   {formatarDiaMes(avisoAtual.criadoEm)} · {formatarHora(avisoAtual.criadoEm)}
                 </span>
               </div>
-              <h2 className="m-0 max-w-xl text-[26px] font-bold leading-tight tracking-tight text-white text-balance">
+              <h2 className="m-0 max-w-xl text-xl leading-tight font-semibold tracking-tight text-balance text-white sm:text-[26px]">
                 {avisoAtual.titulo}
               </h2>
-              <span className="text-[12.5px] text-white/75">{avisoAtual.autorNome}</span>
+              <span className="text-[13px] text-white/80">{avisoAtual.autorNome}</span>
             </div>
           </motion.button>
         </AnimatePresence>
       )}
 
       {!vazio && (
-        <div className="absolute bottom-5 right-5 flex items-center gap-3.5">
+        <div className="absolute right-4 bottom-4 flex items-center gap-3.5 sm:right-5 sm:bottom-5">
           <div className="flex gap-1.5">
             {destaques.map((aviso, i) => (
               <button
@@ -116,7 +105,7 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
               type="button"
               onClick={anterior}
               title="Anterior"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
+              className="flex size-10 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 sm:size-8"
             >
               <IconeCaretLeft tamanho={16} />
             </button>
@@ -124,7 +113,7 @@ function CarrosselDestaques({ destaques, aoAbrir }: PropriedadesCarrossel) {
               type="button"
               onClick={proximo}
               title="Próximo"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
+              className="flex size-10 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30 sm:size-8"
             >
               <IconeCaretRight tamanho={16} />
             </button>
