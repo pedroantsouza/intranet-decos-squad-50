@@ -17,31 +17,29 @@ Aniversariante **não é registro próprio**: é derivado de `usuarios.data_nasc
 
 | ID | Requisito | Back | Front | Teste |
 |---|---|---|---|---|
-| MUR-01 | Listar avisos | 🟡 | 🟡 | ⬜ |
+| MUR-01 | Listar avisos | ✅ | ✅ | ✅ |
 | MUR-02 | Consultar um aviso | ✅ | ✅ | ⬜ |
-| MUR-03 | Publicar aviso | 🟡 | 🟡 | 🟡 |
+| MUR-03 | Publicar aviso | ✅ | ✅ | 🟡 |
 | MUR-04 | Capa do aviso no envio | ✅ | ✅ | 🟡 |
 | MUR-05 | Anexos do aviso no envio | ✅ | ✅ | ⬜ |
-| MUR-06 | Editar texto do aviso | 🟡 | 🟡 | ⬜ |
+| MUR-06 | Editar texto do aviso | ✅ | ✅ | 🟡 |
 | MUR-07 | Trocar e remover capa | ✅ | ✅ | ⬜ |
 | MUR-08 | Adicionar, remover e baixar anexos | ✅ | ✅ | ⬜ |
 | MUR-09 | Capa pública com cache | ✅ | ✅ | ⬜ |
 | MUR-10 | Excluir aviso | ✅ | ✅ | ⬜ |
-| MUR-11 | Tela do mural | — | 🟡 | ⬜ |
-| MUR-12 | Listar eventos por período | ⬜ | ⬜ | ⬜ |
-| MUR-13 | Aniversariantes do mês | 🟡 | 🟡 | ⬜ |
+| MUR-11 | Tela do mural | — | ✅ | ⬜ |
+| MUR-12 | Listar eventos por período | ✅ | ✅ | ✅ |
+| MUR-13 | Aniversariantes do mês | ✅ | ✅ | ✅ |
 | MUR-14 | Filtrar aniversariantes por setor e data | ⬜ | ⬜ | ⬜ |
-| MUR-15 | Tela do calendário | — | 🟡 | ⬜ |
+| MUR-15 | Tela do calendário | — | ✅ | ⬜ |
 
 ### MUR-01 — Listar avisos
-Origem: [ESP] [ENT H1] [CTX] · Back 🟡 · Front 🟡 · Teste ⬜
+Origem: [ESP] [ENT H1] [CTX] · Back ✅ · Front ✅ · Teste ✅
 
 `GET /murais/avisos` — qualquer autenticado; avisos de todos os setores (GER-04), **inclusive
 eventos**, mais recentes primeiro (por `criado_em`). Cada aviso traz `titulo`, `conteudo`,
 `categoria`, `data_inicio`, `data_fim`, `fixado`, `possui_imagem`, `versao_imagem`, `anexos` (id,
 nome, tipo, tamanho), `setor_id/nome`, `autor_id/nome`, `criado_em`, `atualizado_em`.
-
-Falta: `data_inicio`/`data_fim` na resposta e `conteudo` podendo vir `null` (eventos).
 
 - **Dado** aviso publicado por um admin, **quando** outro usuário (inclusive `comum` de outro
   setor) lista, **então** o aviso aparece.
@@ -55,7 +53,7 @@ Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 eventos (mesmo corpo de MUR-01).
 
 ### MUR-03 — Publicar aviso
-Origem: [ESP] [ENT H1] [ENT H3] [CTX] · Back 🟡 · Front 🟡 · Teste 🟡
+Origem: [ESP] [ENT H1] [ENT H3] [CTX] · Back ✅ · Front ✅ · Teste 🟡
 
 `POST /murais/avisos`, `multipart/form-data` — `admin_setor` ou `superadmin`; setor por GER-04.
 
@@ -71,7 +69,7 @@ Origem: [ESP] [ENT H1] [ENT H3] [CTX] · Back 🟡 · Front 🟡 · Teste 🟡
 | `imagem` | opcional (MUR-04) |
 | `anexos` | opcional, lista (MUR-05) |
 
-Falta: categoria `evento` no lugar de `convite`, campos de data e `conteudo` opcional em evento.
+Teste: falta cobrir os `403` (comum; `admin_setor` com setor de outro).
 
 - Data/hora sem fuso é tratada como UTC.
 - **Dado** dados válidos, **então** `201` com o aviso completo (nomes resolvidos, GER-08).
@@ -110,12 +108,12 @@ Pertencem ao aviso e somem com ele; não são Documentos do setor.
   fica no bucket (GER-07).
 
 ### MUR-06 — Editar texto do aviso
-Origem: [ENT] [ENT H3] [CTX] · Back 🟡 · Front 🟡 · Teste ⬜
+Origem: [ENT] [ENT H3] [CTX] · Back ✅ · Front ✅ · Teste 🟡
 
 `PUT /murais/avisos/{id}` (JSON) — escopo por setor (GER-04). Atualização parcial de `titulo`,
 `conteudo`, `categoria`, `data_inicio`, `data_fim`, `fixado`.
 
-Falta: campos de data e as regras de evento abaixo.
+Teste: regras de evento e de `null` cobertas; falta corpo vazio, `atualizado_em` e escopo por setor.
 
 - Corpo vazio → nada muda, `200`. Qualquer mudança atualiza `atualizado_em`.
 - `null` só é aceito em `conteudo` (se o aviso resultante for `evento`) e em `data_fim`; nos
@@ -163,7 +161,7 @@ Origem: [ENT] · Back ✅ · Front ✅ · Teste ⬜
 depois do commit, todos os objetos do aviso no bucket. Vale igual para eventos.
 
 ### MUR-11 — Tela do mural
-Origem: [ESP] [ENT H1] [CTX] · Back — · Front 🟡 · Teste ⬜
+Origem: [ESP] [ENT H1] [CTX] · Back — · Front ✅ · Teste ⬜
 
 - Busca local por título, autor ou conteúdo; filtros por categoria (inclusive `evento`) e setor.
 - Eventos aparecem no feed, no carrossel e nos fixados como qualquer aviso; o card e o detalhe de
@@ -180,11 +178,8 @@ Origem: [ESP] [ENT H1] [CTX] · Back — · Front 🟡 · Teste ⬜
   publicar/editar/excluir (invalidação de cache).
 - Detalhe do aviso em modal, com capa e anexos baixáveis.
 
-Falta: categoria `evento` (filtro, badge, campos de data no formulário, data no card/detalhe) e os
-painéis passarem a usar MUR-12/MUR-13.
-
 ### MUR-12 — Listar eventos por período
-Origem: [ESP] [ENT H3] [CTX] · Back ⬜ · Front ⬜ · Teste ⬜
+Origem: [ESP] [ENT H3] [CTX] · Back ✅ · Front ✅ · Teste ✅
 
 `GET /murais/eventos?de=&ate=&setor_id=` — qualquer autenticado; devolve só avisos de categoria
 `evento`, com o mesmo corpo de MUR-01. Todos os parâmetros opcionais; `de`/`ate` são datas
@@ -201,12 +196,10 @@ depois `titulo`. Substitui o antigo `GET /calendario/eventos` (CAL-01, CAL-02).
 - **Dado** evento sem `data_fim`, **então** só `data_inicio` conta.
 
 ### MUR-13 — Aniversariantes do mês
-Origem: [ESP] [ENT H3] · Back 🟡 · Front 🟡 · Teste ⬜
+Origem: [ESP] [ENT H3] · Back ✅ · Front ✅ · Teste ✅
 
 `GET /murais/aniversariantes?mes=` — qualquer autenticado. `mes` de 1 a 12 (fora disso → `422`);
 sem `mes`, usa o mês atual. Substitui o antigo `GET /calendario/aniversariantes` (CAL-06).
-
-Falta: a regra já existe em `/calendario/aniversariantes`; mover a rota para o mural.
 
 - Retorna `id`, `nome`, `dia`, `setor_id`, `setor_nome` (ou `null`), ordenado por dia e nome.
 - Só usuários **ativos** com `data_nascimento` preenchida entram.
@@ -223,7 +216,7 @@ Substitui CAL-07.
 - Frontend ⬜: filtros no painel de aniversariantes.
 
 ### MUR-15 — Tela do calendário
-Origem: [ESP] [ENT H3] [CTX] · Back — · Front 🟡 · Teste ⬜
+Origem: [ESP] [ENT H3] [CTX] · Back — · Front ✅ · Teste ⬜
 
 Visão do mural que posiciona os eventos nas suas datas. Rota `/calendario`, feature `murais`.
 Substitui CAL-08.
@@ -237,7 +230,3 @@ Substitui CAL-08.
 - Criar evento só para `admin_setor`/`superadmin`: abre o formulário de aviso com a categoria
   `evento` já escolhida (e a data clicada, se houver) — não existe mais formulário de evento
   separado.
-
-Falta: a tela existe em `features/calendario` sobre `/calendario/eventos`; mover para
-`features/murais`, consumir MUR-12/MUR-13 e trocar o modal de evento pelo detalhe/formulário de
-aviso.

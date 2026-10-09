@@ -152,3 +152,17 @@ Ciclo vermelho → verde, um critério por vez:
 - **Downgrade com perda** (capa e anexos de eventos e convites), documentado na migration.
 - **Trabalho paralelo** em `features/calendario` ou `modules/calendario` conflita com a remoção.
   Avisar o time antes do PR 2.
+
+## Execução (2026-10-09, branch `feature/murais/eventos-no-mural`)
+
+Feito numa branch só, com backend e frontend juntos (a convenção pede isso para tarefa que cruza
+as camadas), então o alias `/calendario/*` não foi necessário. Diferenças em relação ao plano:
+
+- As regras de MUR-03 ficaram no service (`_validar_aviso`), e não num `model_validator`: assim o
+  erro sai com o `campo` certo, e a mesma função valida o resultado da edição (MUR-06).
+- `Fabrica.evento(...)` não foi criada: os testes criam eventos pela API.
+- No frontend, as queries de eventos ficam debaixo da chave `['avisos', ...]`, então a
+  invalidação que já existia depois de salvar ou excluir aviso também atualiza o calendário e os
+  painéis.
+- A migration foi testada à mão num banco descartável: upgrade com evento e convite existentes,
+  CHECK barrando evento sem data, downgrade e re-upgrade.
