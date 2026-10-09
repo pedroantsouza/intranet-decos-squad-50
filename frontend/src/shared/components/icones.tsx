@@ -14,7 +14,7 @@ function criarIcone(caminho: React.ReactNode) {
         height={tamanho}
         fill="none"
         stroke="currentColor"
-        strokeWidth={1.6}
+        strokeWidth={1.75}
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
@@ -124,6 +124,10 @@ export const IconePredio = criarIcone(
 )
 
 export const IconeMais = criarIcone(<path d="M12 5v14M5 12h14" />)
+
+export const IconeMenos = criarIcone(<path d="M5 12h14" />)
+
+export const IconeMenu = criarIcone(<path d="M4 6h16M4 12h16M4 18h16" />)
 
 export const IconeLapis = criarIcone(
   <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15v5Z" />,
