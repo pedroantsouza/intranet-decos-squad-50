@@ -7,10 +7,18 @@ interface PropriedadesPainelProximosEventos {
   aoAbrir: (evento: Evento) => void
 }
 
+function descreverHorario(evento: Evento): string {
+  const inicio = formatarHora(evento.dataInicio)
+  if (!evento.dataFim) return inicio
+  // O dia de início já aparece no quadrinho ao lado; evento de vários dias mostra até quando vai.
+  if (formatarDiaMes(evento.dataFim) !== formatarDiaMes(evento.dataInicio)) {
+    return `${inicio} até ${formatarDiaMes(evento.dataFim)} ${formatarHora(evento.dataFim)}`
+  }
+  return `${inicio} às ${formatarHora(evento.dataFim)}`
+}
+
 function descreverEvento(evento: Evento): string {
-  const horario = [formatarHora(evento.dataInicio), evento.dataFim ? formatarHora(evento.dataFim) : null]
-    .filter(Boolean)
-    .join(' às ')
+  const horario = descreverHorario(evento)
   const conteudo = evento.conteudo?.trim()
   return conteudo ? `${horario} · ${conteudo}` : horario
 }
