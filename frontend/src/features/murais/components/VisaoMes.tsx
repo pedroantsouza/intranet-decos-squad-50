@@ -1,4 +1,4 @@
-import { DIAS_SEMANA, montarGradeMes } from '../formatadores'
+import { DIAS_SEMANA, montarGradeMes } from '../formatadoresCalendario'
 import type { Aniversariante, Evento } from '../types'
 
 interface PropriedadesVisaoMes {
@@ -6,9 +6,10 @@ interface PropriedadesVisaoMes {
   mes: number
   eventosPorDia: Map<string, Evento[]>
   aniversariantesDoDia: (data: Date) => Aniversariante[]
+  aoAbrirEvento: (evento: Evento) => void
 }
 
-function VisaoMes({ ano, mes, eventosPorDia, aniversariantesDoDia }: PropriedadesVisaoMes) {
+function VisaoMes({ ano, mes, eventosPorDia, aniversariantesDoDia, aoAbrirEvento }: PropriedadesVisaoMes) {
   const celulas = montarGradeMes(ano, mes)
 
   return (
@@ -41,13 +42,15 @@ function VisaoMes({ ano, mes, eventosPorDia, aniversariantesDoDia }: Propriedade
                 </span>
               )}
               {eventosDoDia.map((evento) => (
-                <span
+                <button
                   key={evento.id}
+                  type="button"
+                  onClick={() => aoAbrirEvento(evento)}
                   title={evento.titulo}
-                  className="min-w-0 truncate rounded-md bg-brand-500 px-1.5 py-1 text-[11px] leading-snug text-white"
+                  className="min-w-0 cursor-pointer truncate rounded-md bg-brand-500 px-1.5 py-1 text-left text-[11px] leading-snug text-white transition-colors hover:bg-brand-600"
                 >
                   {evento.titulo}
-                </span>
+                </button>
               ))}
               {aniversariantes.map((pessoa) => (
                 <span

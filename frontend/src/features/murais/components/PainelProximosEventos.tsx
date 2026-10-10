@@ -4,17 +4,26 @@ import type { Evento } from '../types'
 
 interface PropriedadesPainelProximosEventos {
   eventos: Evento[]
+  aoAbrir: (evento: Evento) => void
+}
+
+function descreverHorario(evento: Evento): string {
+  const inicio = formatarHora(evento.dataInicio)
+  if (!evento.dataFim) return inicio
+  // O dia de início já aparece no quadrinho ao lado; evento de vários dias mostra até quando vai.
+  if (formatarDiaMes(evento.dataFim) !== formatarDiaMes(evento.dataInicio)) {
+    return `${inicio} até ${formatarDiaMes(evento.dataFim)} ${formatarHora(evento.dataFim)}`
+  }
+  return `${inicio} às ${formatarHora(evento.dataFim)}`
 }
 
 function descreverEvento(evento: Evento): string {
-  const horario = [formatarHora(evento.dataInicio), evento.dataFim ? formatarHora(evento.dataFim) : null]
-    .filter(Boolean)
-    .join(' às ')
-  const descricao = evento.descricao?.trim()
-  return descricao ? `${horario} · ${descricao}` : horario
+  const horario = descreverHorario(evento)
+  const conteudo = evento.conteudo?.trim()
+  return conteudo ? `${horario} · ${conteudo}` : horario
 }
 
-function PainelProximosEventos({ eventos }: PropriedadesPainelProximosEventos) {
+function PainelProximosEventos({ eventos, aoAbrir }: PropriedadesPainelProximosEventos) {
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden surface">
       <div className="flex items-center border-b border-slate-200/60 bg-white/40 px-[18px] py-3">
@@ -30,7 +39,12 @@ function PainelProximosEventos({ eventos }: PropriedadesPainelProximosEventos) {
         {eventos.map((evento) => {
           const [dia, mes] = formatarDiaMes(evento.dataInicio).split(' ')
           return (
-            <div key={evento.id} className="flex gap-3">
+            <button
+              key={evento.id}
+              type="button"
+              onClick={() => aoAbrir(evento)}
+              className="-mx-2 flex cursor-pointer gap-3 rounded-[10px] px-2 py-1 text-left transition-colors hover:bg-white/60"
+            >
               <div className="flex-none rounded-[10px] bg-white/55 px-0 py-[7px] text-center ring-1 ring-white/80" style={{ width: 46 }}>
                 <div className="text-[15px] leading-none font-medium text-slate-900 tabular-nums">{dia}</div>
                 <div className="mt-0.5 text-[10px] tracking-wide text-slate-500">{mes}</div>
@@ -39,7 +53,7 @@ function PainelProximosEventos({ eventos }: PropriedadesPainelProximosEventos) {
                 <span className="truncate text-[13px] font-semibold text-slate-900">{evento.titulo}</span>
                 <span className="truncate text-xs text-slate-500">{descreverEvento(evento)}</span>
               </div>
-            </div>
+            </button>
           )
         })}
       </div>

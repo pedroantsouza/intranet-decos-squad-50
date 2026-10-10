@@ -5,7 +5,7 @@ import { ROTULO_CATEGORIA, type CategoriaAviso } from '../types'
 const CORES: Record<CategoriaAviso, string> = {
   comunicado: 'bg-blue-50 text-blue-700 ring-blue-200',
   promocao: 'bg-brand-50 text-brand-700 ring-brand-100',
-  convite: 'bg-green-50 text-green-700 ring-green-200',
+  evento: 'bg-green-50 text-green-700 ring-green-200',
 }
 
 interface PropriedadesBadgeCategoria {
